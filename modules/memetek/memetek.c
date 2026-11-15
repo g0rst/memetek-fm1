@@ -9,8 +9,12 @@
  *   SELECT      the track               ALGORITHM / EDIT   the page
  *   KNOB1..4    the page's parameters   PRESETS   the meme sound
  *   ENV         track pages             FX    mixer           GLO   tempo, swing, crush, drive
+ *   SEL tapped  tap tempo               EDIT  copy the pattern into the next one
+ *   HOME tapped back to the track page, STEP mode
+ *   OCT- / OCT+ STEP mode: shift the track one step; PLAY mode: the octave
+ *   MEME in PLAY mode: white keys the 16 sounds of the bank, OP1..OP6 bank A..F, PIT..the last key pitch -12 -5 0 +7 +12
  *   ARP         dice: randomise the track   SEL + ARP   clear the track
- *   OCT- / OCT+ octave of the keys      SAVE  keep patterns and sounds in flash
+ *   SAVE        keep patterns and sounds in flash
  *   STEP mode, the upper row: OP1..OP6 mute KICK..MEME (SEL held: solo), PIT GLO MONO POLY pattern 1..4,
  *   the unlabelled key on the right: chain
  *
@@ -240,44 +244,8 @@ static void params_default(int ctx)
 }
 #define PI_(c, i) ((int)(V[c][i] + 0.5f))
 
-/* ------------------------------------------------------------------ memes (v0.1: 16 sounds) */
-typedef struct {
-    const char *name, *abbr;
-    uint8_t wave;               /* 0 square 1 pulse 2 saw 3 tri 5 sine; 9: no oscillator */
-    uint8_t nosc;               /* 1..4 */
-    float ratio[3];             /* the other oscillators against the first */
-    float f[4], t[3];           /* pitch: f0, then exp ramps to f1 at t0, f2 at +t1, f3 at +t2 (t 0: stop) */
-    uint8_t nseq;               /* > 0: f[] ignored, seq[] notes, each seql long (the last one lastl) */
-    float seq[8], seql, lastl;
-    float att, hold, rel, amp;
-    float vibf, vibd, vibdec;   /* vibrato Hz, depth (fraction of f), its fall time (0: steady) */
-    float noise, noisedec;      /* a noise layer: level, decay */
-    uint8_t ftype;              /* 0 none 1 LP 2 BP 3 HP */
-    float fc0, fc1, q;          /* cutoff sweep over the sound */
-    uint8_t reps;               /* repeats (1 = once) */
-    float gap;                  /* repeat period */
-    float drive;
-} meme_t;
-
-static const meme_t MEMES[] = {
-    {"BOING", "BNG", 5, 1, {0}, {300, 700, 140, 0}, {0.07f, 0.48f, 0}, 0, {0}, 0, 0, 0.005f, 0.0f, 0.55f, 0.7f, 16, 0.25f, 0.5f, 0, 0, 0, 0, 0, 1, 1, 0, 0},
-    {"SPRING", "SPR", 3, 1, {0}, {170, 260, 0, 0}, {1.1f, 0, 0}, 0, {0}, 0, 0, 0.003f, 0.0f, 1.1f, 0.7f, 24, 0.7f, 1.0f, 0, 0, 0, 0, 0, 1, 1, 0, 0},
-    {"SLIDE UP", "SL^", 5, 1, {0}, {380, 1700, 0, 0}, {0.5f, 0, 0}, 0, {0}, 0, 0, 0.04f, 0.41f, 0.1f, 0.45f, 7, 0.02f, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
-    {"SLIDE DN", "SLv", 5, 1, {0}, {1700, 330, 0, 0}, {0.6f, 0, 0}, 0, {0}, 0, 0, 0.04f, 0.51f, 0.1f, 0.45f, 7, 0.02f, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
-    {"BONK", "BNK", 5, 1, {0}, {650, 140, 0, 0}, {0.09f, 0, 0}, 0, {0}, 0, 0, 0.001f, 0.0f, 0.18f, 1.0f, 0, 0, 0, 0.5f, 0.04f, 0, 0, 0, 0, 1, 0, 0},
-    {"PEW", "PEW", 0, 1, {0}, {1700, 160, 0, 0}, {0.2f, 0, 0}, 0, {0}, 0, 0, 0.002f, 0.0f, 0.2f, 0.5f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    {"COIN", "CON", 0, 1, {0}, {0}, {0}, 2, {988, 1319}, 0.07f, 0.35f, 0.002f, 0.0f, 0.4f, 0.45f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    {"JUMP", "JMP", 0, 1, {0}, {280, 950, 0, 0}, {0.16f, 0, 0}, 0, {0}, 0, 0, 0.002f, 0.0f, 0.2f, 0.4f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    {"1UP", "1UP", 0, 1, {0}, {0}, {0}, 5, {523, 659, 784, 1047, 1319}, 0.07f, 0.07f, 0.001f, 0.0f, 0.36f, 0.35f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    {"LASER", "LSR", 2, 1, {0}, {2800, 90, 0, 0}, {0.35f, 0, 0}, 0, {0}, 0, 0, 0.002f, 0.0f, 0.35f, 0.4f, 40, 0.07f, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    {"HORN", "HRN", 2, 4, {470.0f / 466.0f, 698.0f / 466.0f, 703.0f / 466.0f}, {466, 0, 0, 0}, {0}, 0, {0}, 0, 0, 0.015f, 0.3f, 0.08f, 0.35f, 0, 0, 0, 0, 0, 2, 1300, 1300, 0.8f, 1, 0, 0},
-    {"BOOM", "BOM", 5, 1, {0}, {120, 30, 0, 0}, {0.5f, 0, 0}, 0, {0}, 0, 0, 0.002f, 0.0f, 1.5f, 1.0f, 0, 0, 0, 0.8f, 0.25f, 0, 0, 0, 0, 1, 0, 3.0f},
-    {"FART", "FRT", 2, 1, {0}, {85, 110, 60, 95}, {0.12f, 0.14f, 0.2f}, 0, {0}, 0, 0, 0.02f, 0.0f, 0.45f, 0.9f, 23, 0.25f, 0, 0.3f, 0.4f, 1, 450, 450, 7, 1, 0, 0},
-    {"SAD", "SAD", 2, 1, {0}, {0}, {0}, 4, {311, 294, 277, 262}, 0.32f, 1.0f, 0.04f, 0.0f, 0.06f, 0.6f, 6, 0.03f, 0, 0, 0, 1, 1000, 1000, 2, 1, 0, 0},
-    {"BRUH", "BRH", 2, 1, {0}, {125, 88, 0, 0}, {0.45f, 0, 0}, 0, {0}, 0, 0, 0.015f, 0.0f, 0.45f, 2.5f, 0, 0, 0, 0, 0, 2, 350, 350, 4, 1, 0, 0},
-    {"QUACK", "QAK", 2, 1, {0}, {420, 300, 0, 0}, {0.17f, 0, 0}, 0, {0}, 0, 0, 0.005f, 0.0f, 0.17f, 2.0f, 0, 0, 0, 0, 0, 2, 1600, 800, 3, 1, 0, 0},
-};
-#define NMEME ((int)(sizeof MEMES / sizeof MEMES[0]))
+/* ------------------------------------------------------------------ memes */
+#include "memes.inc"
 
 /* ------------------------------------------------------------------ patterns */
 typedef struct { uint8_t s[NTR][NSTEP]; } pat_t;
@@ -309,17 +277,21 @@ static void patterns_default(void)
         PAT[2].s[T_BASS][i] = (i & 1) ? 0 : (uint8_t)(i < 8 ? 1 : i < 12 ? 2 : 3);
         PAT[3].s[T_KICK][i] = KICK[i]; PAT[3].s[T_HAT][i] = HAT[i];
     }
-    PAT[0].s[T_MEME][14] = 11;                           /* HORN */
-    PAT[1].s[T_MEME][0] = 15; PAT[1].s[T_MEME][6] = 1; PAT[1].s[T_MEME][10] = 16; PAT[1].s[T_MEME][12] = 13; PAT[1].s[T_MEME][14] = 11;
+    PAT[0].s[T_MEME][14] = (uint8_t)meme_id("HORN");
+    PAT[1].s[T_MEME][0] = (uint8_t)meme_id("BRUH"); PAT[1].s[T_MEME][6] = (uint8_t)meme_id("BOING"); PAT[1].s[T_MEME][10] = (uint8_t)meme_id("QUACK");
+    PAT[1].s[T_MEME][12] = (uint8_t)meme_id("FART"); PAT[1].s[T_MEME][14] = (uint8_t)meme_id("HORN x3");
     PAT[1].s[T_LEAD][8] = 74; PAT[1].s[T_LEAD][10] = 72; PAT[1].s[T_LEAD][12] = 69;
-    PAT[2].s[T_MEME][3] = 8; PAT[2].s[T_MEME][7] = 7; PAT[2].s[T_MEME][11] = 8; PAT[2].s[T_MEME][15] = 9;
-    PAT[3].s[T_MEME][0] = 12; PAT[3].s[T_MEME][4] = 2; PAT[3].s[T_MEME][8] = 5; PAT[3].s[T_MEME][12] = 14;
+    PAT[2].s[T_MEME][3] = (uint8_t)meme_id("JUMP"); PAT[2].s[T_MEME][7] = (uint8_t)meme_id("COIN");
+    PAT[2].s[T_MEME][11] = (uint8_t)meme_id("JUMP"); PAT[2].s[T_MEME][15] = (uint8_t)meme_id("1UP");
+    PAT[3].s[T_MEME][0] = (uint8_t)meme_id("DROP"); PAT[3].s[T_MEME][4] = (uint8_t)meme_id("SPRING");
+    PAT[3].s[T_MEME][8] = (uint8_t)meme_id("RIMSHOT"); PAT[3].s[T_MEME][12] = (uint8_t)meme_id("SAD");
 }
 
 /* ------------------------------------------------------------------ shared state (main loop <-> audio) */
 static volatile uint8_t playing, rec, chain_on;
 static volatile uint8_t pat_edit, pat_play, pat_next;
 static volatile uint8_t mute[NTR], solo[NTR];
+static volatile int live_shift;                        /* MEME live pitch (semitones), the upper row in PLAY mode */
 static volatile int cur_step = -1;
 static volatile uint32_t step_count;
 static float sps = 4134.375f;                            /* samples per step */
@@ -699,12 +671,17 @@ static void lead_run(float *l, float *r, int a, int b)
     if (!lead.gate && lead.amp < 0.0003f) lead.on = 0;
 }
 
-/* ------------------------------------------------------------------ MEME voices */
-#define NMV 4
+/* ------------------------------------------------------------------ MEME voices: one per layer */
+#define NMV 10
 typedef struct {
-    int on, def, seg, si, reps;
-    int32_t t, tseg, tlen, rep_t;
-    float f, kf, fnext, amp, vibd, kvib, vph, noise, kn, cut, kcut, pitch, timesc;
+    const layer_t *L;
+    int on, seg, si, n_notes, rep;
+    int32_t wait, t, tlen, period, tseg, notelen, notestart;
+    float f, kf, pitch, ts, repamp;
+    float vibd, kvib, vph, amph;
+    float noise, kn, nsh, ncnt, nrate, knr, crk, kcrk;
+    float jit, jcnt;
+    float cut, kcut, flph; int fseg; int32_t fnext;
     float ph[4];
     svf_t flt;
     int cr;
@@ -714,107 +691,174 @@ static int mv_rr;
 static float meme_ramp_k(float f0, float f1, float sec)
 {
     if (f0 <= 0.0f || f1 <= 0.0f || sec <= 0.0f) return 1.0f;
-    /* f0 * k^(sec*FS) = f1  ->  k = 2^(log2(f1/f0) / (sec*FS)) */
     return fexp2(flog2(f1 / f0) / (sec * FS));
 }
-static void mv_seg(mv_t *v)
+static inline float layer_q(const layer_t *L) { return L->ftype == 2 ? (L->q > 0.0f ? L->q : 1.0f) : (L->q > 0.0f ? qdb(L->q) : 0.707f); }
+static void mv_note(mv_t *v)                             /* the next note of a sequence, or the next pitch segment */
 {
-    const meme_t *m = &MEMES[v->def];
-    float ts = v->timesc;
-    if (m->nseq) {
-        if (v->si >= m->nseq) { v->tseg = 0x7fffffff; return; }
-        v->f = m->seq[v->si] * v->pitch; v->kf = 1.0f;
-        v->tseg = v->t + (int32_t)((v->si == m->nseq - 1 ? m->lastl : m->seql) * ts * FS);
+    const layer_t *L = v->L;
+    float ts = v->ts;
+    if (L->seq) {
+        int count = L->count ? L->count : L->nseq;
+        if (v->si >= count) { v->tseg = 0x7fffffff; return; }
+        int k = L->seqrand ? (int)(rnd32() % L->nseq) : v->si % L->nseq;
+        v->f = L->seq[k] * v->pitch; v->kf = 1.0f;
+        float len = (v->si == count - 1 && L->lastl > 0.0f) ? L->lastl : L->seql;
+        v->notestart = v->t;
+        v->notelen = (int32_t)(len * ts * FS);
+        if (v->notelen < 1) v->notelen = 1;
+        v->tseg = v->t + v->notelen;
         v->si++;
         return;
     }
-    if (v->seg < 3 && m->t[v->seg] > 0.0f && m->f[v->seg + 1] > 0.0f) {
-        v->kf = meme_ramp_k(m->f[v->seg], m->f[v->seg + 1], m->t[v->seg] * ts);
-        v->tseg = v->t + (int32_t)(m->t[v->seg] * ts * FS);
+    if (v->seg < 3 && L->t[v->seg] > 0.0f && L->f[v->seg + 1] > 0.0f) {
+        v->kf = meme_ramp_k(L->f[v->seg], L->f[v->seg + 1], L->t[v->seg] * ts);
+        v->tseg = v->t + (int32_t)(L->t[v->seg] * ts * FS);
         v->seg++;
     } else { v->kf = 1.0f; v->tseg = 0x7fffffff; }
+}
+static void mv_fseg(mv_t *v)                             /* the filter's next stretch */
+{
+    const layer_t *L = v->L;
+    float m = L->fcm > 0.0f ? L->fcm : 0.5f;
+    int32_t a = (int32_t)((float)v->tlen * m);
+    if (v->fseg == 0 && L->fc1 > 0.0f) {
+        v->kcut = meme_ramp_k(L->fc0, L->fc1, (float)(a > 1 ? a : 1) * INV_FS); v->fnext = a; v->fseg = 1;
+    } else if (v->fseg == 1 && L->fc2 > 0.0f) {
+        int32_t b = v->tlen - a;
+        v->kcut = meme_ramp_k(L->fc1, L->fc2, (float)(b > 1 ? b : 1) * INV_FS); v->fnext = 0x7fffffff; v->fseg = 2;
+    } else { v->kcut = 1.0f; v->fnext = 0x7fffffff; v->fseg = 3; }
+}
+static void mv_start(mv_t *v)                            /* (re)start a layer: at the trigger and at each repeat */
+{
+    const layer_t *L = v->L;
+    float ts = v->ts;
+    v->t = 0; v->seg = 0; v->si = 0; v->cr = 0;
+    if (L->seq) {
+        int count = L->count ? L->count : L->nseq;
+        float last = L->lastl > 0.0f ? L->lastl : L->seql;
+        v->tlen = (int32_t)(((float)(count - 1) * L->seql + last) * ts * FS);
+    } else v->tlen = (int32_t)((L->att + L->hold + L->rel) * ts * FS);
+    if (v->tlen < 1) v->tlen = 1;
+    if (v->period < v->tlen) v->period = v->tlen;
+    v->f = L->f[0] * v->pitch;
+    v->vibd = L->vibd; v->kvib = L->vibdec > 0.0f ? decay_k(L->vibdec * ts, -4.0f) : 1.0f;
+    v->noise = L->noise; v->kn = L->noisedec > 0.0f ? decay_k(L->noisedec * ts, LN_1000) : 1.0f;
+    v->nrate = L->nr0; v->knr = (L->nr0 > 0.0f && L->nr1 > 0.0f) ? meme_ramp_k(L->nr0, L->nr1, (float)v->tlen * INV_FS) : 1.0f;
+    v->ncnt = 0.0f; v->nsh = 0.0f; v->crk = 0.0f; v->kcrk = decay_k(0.004f, -1.0f);
+    v->jit = 1.0f; v->jcnt = 0.0f;
+    v->cut = L->fc0; v->fseg = 0; v->flph = 0.0f;
+    v->flt.ic1 = v->flt.ic2 = 0.0f;
+    if (L->ftype) { svf_set(&v->flt, v->cut, layer_q(L)); mv_fseg(v); }
+    for (int k = 0; k < 4; k++) v->ph[k] = 0.0f;
+    mv_note(v);
 }
 static void meme_trig(int idx, int step)
 {
     if (idx < 1 || idx > NMEME) return;
     const meme_t *m = &MEMES[idx - 1];
-    mv_t *v = &mv[mv_rr++ % NMV];
-    float pitch = V[5][M_PITCH] + (V[5][M_RND] > 0.0f ? (float)(int)(frnd() * V[5][M_RND]) : 0.0f);
-    v->def = idx - 1; v->on = 1; v->t = 0; v->seg = 0; v->si = 0; v->cr = 0;
-    v->pitch = semis(pitch);
-    v->timesc = V[5][M_LEN];
-    v->f = (m->nseq ? m->seq[0] : m->f[0]) * v->pitch;
-    v->tlen = (int32_t)((m->att + m->hold + m->rel) * v->timesc * FS);
-    if (m->nseq) v->tlen = (int32_t)(((float)(m->nseq - 1) * m->seql + m->lastl) * v->timesc * FS);
-    v->vibd = m->vibd; v->kvib = m->vibdec > 0.0f ? decay_k(m->vibdec * v->timesc, -4.0f) : 1.0f; v->vph = 0.0f;
-    v->noise = m->noise; v->kn = m->noise > 0.0f ? decay_k(m->noisedec * v->timesc, LN_1000) : 0.0f;
-    v->cut = m->fc0; v->kcut = meme_ramp_k(m->fc0, m->fc1, (float)v->tlen * INV_FS);
-    for (int k = 0; k < 4; k++) v->ph[k] = 0.0f;
-    v->flt.ic1 = v->flt.ic2 = 0.0f;
-    if (m->ftype) svf_set(&v->flt, m->fc0, m->ftype == 2 ? m->q : (m->q > 0.0f ? qdb(m->q) : 0.707f));
-    v->reps = m->reps; v->rep_t = (int32_t)(m->gap * v->timesc * FS);
-    v->amp = 0.0f;
-    mv_seg(v);
-    if (PI_(5, M_MODE) == 1 && step != -1) {            /* STUTTER: four short hits, half a step apart */
-        int32_t sl = (int32_t)(sps * 0.5f);
-        if (v->tlen > sl * 9 / 10) { v->tlen = sl * 9 / 10; v->reps = 1; }
-        if (step >= 0) for (int k = 1; k < 4; k++) ev_add(sl * k, E_MEME, (uint8_t)idx, 0);
+    float pitch = semis(V[5][M_PITCH] + (V[5][M_RND] > 0.0f ? (float)(int)(frnd() * V[5][M_RND]) : 0.0f));
+    int stutter = PI_(5, M_MODE) == 1 && step != -1;
+    int32_t sl = (int32_t)(sps * 0.5f);
+    for (int l = 0; l < m->nl && l < 4; l++) {
+        mv_t *v = &mv[mv_rr++ % NMV];
+        const layer_t *L = &m->L[l];
+        v->L = L; v->on = 1; v->pitch = pitch * semis((float)live_shift); v->ts = V[5][M_LEN];
+        v->rep = L->reps > 1 ? L->reps : 1; v->repamp = 1.0f;
+        v->period = (int32_t)(L->gap * v->ts * FS);
+        v->wait = (int32_t)(L->delay * v->ts * FS);
+        mv_start(v);
+        if (stutter) {                                   /* STUTTER: short hits, half a step apart */
+            if (v->wait >= sl) { v->on = 0; continue; }
+            if (v->tlen > sl * 9 / 10) v->tlen = sl * 9 / 10;
+            v->rep = 1;
+        }
     }
+    if (stutter && step >= 0) for (int k = 1; k < 4; k++) ev_add(sl * k, E_MEME, (uint8_t)idx, 0);
 }
 static void meme_run(float *l, float *r, int a, int b)
 {
     for (int n = 0; n < NMV; n++) {
         mv_t *v = &mv[n];
         if (!v->on) continue;
-        const meme_t *m = &MEMES[v->def];
-        float ts = v->timesc;
-        int32_t ta = (int32_t)(m->att * ts * FS), th = (int32_t)((m->att + m->hold) * ts * FS);
-        float k = m->drive > 0.0f ? m->drive : 0.0f, nk = k > 0.0f ? 1.0f / ftanh(k) : 1.0f;
+        const layer_t *L = v->L;
+        float ts = v->ts;
+        int nosc = L->nosc > 1 ? L->nosc : 1;
+        int32_t ta = (int32_t)(L->att * ts * FS), th = (int32_t)((L->att + L->hold) * ts * FS);
+        float relN = L->rel * ts * FS + 1.0f;
+        float k = L->drive, nk = k > 0.0f ? 1.0f / ftanh(k) : 1.0f;
+        float gate = L->gate > 0.0f ? L->gate : 0.8f;
+        int fmode = L->ftype == 1 ? 0 : L->ftype == 2 ? 1 : 2;
+        float oscg = nosc > 1 ? 0.5f : 1.0f;
         for (int i = a; i < b; i++) {
-            if (v->t >= v->tseg) mv_seg(v);
-            if ((v->cr++ & 15) == 0 && m->ftype) {
-                if (m->fc1 != m->fc0) svf_set(&v->flt, v->cut, m->ftype == 2 ? m->q : (m->q > 0.0f ? qdb(m->q) : 0.707f));
+            if (v->wait > 0) { v->wait--; continue; }
+            if (v->t >= v->tlen) {                       /* done, or silent until the next repeat */
+                if (v->rep > 1 && v->t >= v->period) {
+                    v->rep--; v->repamp *= L->repdec > 0.0f ? L->repdec : 1.0f; mv_start(v);
+                } else if (v->rep <= 1) { v->on = 0; break; }
+                else { v->t++; continue; }
+            }
+            if (v->t >= v->tseg) mv_note(v);
+            if (L->ftype && (v->cr++ & 15) == 0) {
+                if (v->t >= v->fnext) mv_fseg(v);
+                float fc = v->cut;
+                if (L->fld > 0.0f) { fc *= fexp2(fsin1(v->flph) * L->fld); v->flph += L->flf * 16.0f * INV_FS; }
+                svf_set(&v->flt, fc, layer_q(L));
+                v->cut *= fexp2(flog2(v->kcut) * 16.0f);
             }
             v->f *= v->kf;
-            v->cut *= v->kcut;
             float f = v->f;
-            if (v->vibd > 0.0f) { v->vph += m->vibf * INV_FS; f *= 1.0f + fsin1(v->vph) * v->vibd; v->vibd *= v->kvib; }
-            float x = 0.0f;
-            if (m->wave != 9) {
-                v->ph[0] = wrap1(v->ph[0] + f * INV_FS);
-                x = wave(m->wave, v->ph[0]);
-                for (int o = 1; o < m->nosc; o++) {
-                    v->ph[o] = wrap1(v->ph[o] + f * m->ratio[o - 1] * INV_FS);
-                    x += wave(m->wave, v->ph[o]);
-                }
-                if (m->nosc > 1) x *= 0.5f;
+            if (v->vibd > 0.0f) { v->vph += L->vibf * INV_FS; f *= 1.0f + fsin1(v->vph) * v->vibd; v->vibd *= v->kvib; }
+            if (L->jitd > 0.0f) {
+                v->jcnt += L->jitf * INV_FS;
+                if (v->jcnt >= 1.0f) { v->jcnt -= 1.0f; v->jit = 1.0f + frnd() * L->jitd; }
+                f *= v->jit;
             }
-            if (v->noise > 0.0005f) { x += frnd() * v->noise; v->noise *= v->kn; }
-            if (m->ftype) x = svf_run(&v->flt, x, m->ftype == 1 ? 0 : m->ftype == 2 ? 1 : 2);
-            /* amp: attack, hold, release (exp) or for a sequence: each note gated */
+            float x = 0.0f;
+            if (L->wave != 9) {
+                v->ph[0] = wrap1(v->ph[0] + f * INV_FS);
+                x = wave(L->wave, v->ph[0]);
+                for (int o = 1; o < nosc; o++) {
+                    v->ph[o] = wrap1(v->ph[o] + f * L->ratio[o - 1] * INV_FS);
+                    x += wave(L->wave, v->ph[o]);
+                }
+                x *= oscg;
+            }
+            if (v->noise > 0.0005f) {
+                float nz;
+                if (v->nrate > 0.0f) {
+                    v->ncnt += v->nrate;
+                    if (v->ncnt >= 1.0f) { v->ncnt -= (float)(int)v->ncnt; v->nsh = frnd(); }
+                    nz = v->nsh; v->nrate *= v->knr;
+                } else nz = frnd();
+                if (L->crackle > 0.0f) {
+                    if (frnd01() < L->crackle * INV_FS) v->crk = 0.4f + frnd01() * 0.8f;
+                    nz *= v->crk; v->crk *= v->kcrk;
+                }
+                x += nz * v->noise;
+                v->noise *= v->kn;
+            }
+            if (L->ftype) x = svf_run(&v->flt, x, fmode);
             float env;
-            if (m->nseq) {
-                int32_t into = v->t - (v->tseg - (int32_t)((v->si == m->nseq ? m->lastl : m->seql) * ts * FS));
-                int32_t len = (int32_t)((v->si == m->nseq ? m->lastl : m->seql) * ts * FS);
-                env = into < (int32_t)(m->att * ts * FS) + 1 ? (float)into / ((float)(m->att * ts * FS) + 1.0f)
-                    : into > len * 8 / 10 ? 1.0f - (float)(into - len * 8 / 10) / ((float)len * 0.15f + 1.0f) : 1.0f;
-                if (env < 0.0f) env = 0.0f;
+            if (L->seq) {                                /* each note gated, all of it under att / hold / rel */
+                int32_t into = v->t - v->notestart, on = (int32_t)((float)v->notelen * gate);
+                int32_t fa = (int32_t)(0.002f * FS) + 1;
+                env = into < fa ? (float)into / (float)fa : 1.0f;
+                if (gate < 1.0f && into > on) { float d = 1.0f - (float)(into - on) / (0.005f * FS + 1.0f); env = d > 0.0f ? d : 0.0f; }
+                if (L->att > 0.0f && v->t < ta) env *= (float)v->t / (float)(ta + 1);
+                if (L->rel > 0.0f && v->t > th) env *= fexp((float)(v->t - th) / relN * LN_1000);
             } else if (v->t < ta) env = (float)v->t / (float)(ta + 1);
             else if (v->t < th) env = 1.0f;
-            else { float rr = (float)(v->t - th) / (m->rel * ts * FS + 1.0f); env = fexp(rr * LN_1000); }
-            x *= env * m->amp;
+            else env = fexp((float)(v->t - th) / relN * LN_1000);
+            if (L->amd > 0.0f) {
+                v->amph += L->amf * INV_FS;
+                float m = L->amsq ? (fsin1(v->amph) > 0.0f ? 1.0f : 0.0f) : 0.5f + 0.5f * fsin1(v->amph);
+                env *= 1.0f - L->amd * (1.0f - m);
+            }
+            x *= env * L->amp * v->repamp;
             if (k > 0.0f) x = ftanh(k * x) * nk;
             l[i] += x; r[i] += x;
             v->t++;
-            if (v->t >= v->tlen) {
-                if (--v->reps > 0) {                    /* again, from the start */
-                    int reps = v->reps; int32_t rt = v->rep_t;
-                    float pitch = v->pitch, tsc = v->timesc;
-                    v->t = 0; v->seg = 0; v->si = 0;
-                    v->f = (m->nseq ? m->seq[0] : m->f[0]) * pitch; v->noise = m->noise; v->cut = m->fc0;
-                    mv_seg(v); v->reps = reps; v->rep_t = rt; v->timesc = tsc;
-                } else { v->on = 0; break; }
-            }
         }
     }
 }
@@ -990,7 +1034,7 @@ static store_t store;
 static int store_load(void)
 {
     if (!HB_HOST_HAS(H, bank_load)) return -1;
-    if (H->bank_load(&store, sizeof store) != 0 || store.magic != STORE_MAGIC || store.version != 1) return -1;
+    if (H->bank_load(&store, sizeof store) != 0 || store.magic != STORE_MAGIC || store.version != 2) return -1;
     for (int p = 0; p < NPAT; p++) PAT[p] = store.pat[p];
     for (int c = 0; c < NCTX; c++)
         for (int i = 0; i < NDEF[c]; i++) {
@@ -1005,7 +1049,7 @@ static int store_load(void)
 static int store_save(void)
 {
     if (!HB_HOST_HAS(H, bank_save)) return -1;
-    store.magic = STORE_MAGIC; store.version = 1;
+    store.magic = STORE_MAGIC; store.version = 2;
     for (int p = 0; p < NPAT; p++) store.pat[p] = PAT[p];
     for (int c = 0; c < NCTX; c++) for (int i = 0; i < MAXP; i++) store.v[c][i] = V[c][i];
     store.chain = chain_on;
@@ -1024,6 +1068,8 @@ static const int8_t KEY_BLACK[27] = {-1, 0, -1, 1, -1, 2, -1, -1, 3, -1, 4, -1, 
 static const uint8_t STEP_KEY[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
 
 static int npages(int c) { return (NDEF[c] + 3) / 4; }
+static void cat_(char *d, const char *s) { while (*d) d++; while (*s) *d++ = *s++; *d = 0; }
+static void fmt_num_(char *d, int v) { char b[12]; int n = 0; while (*d) d++; if (v < 0) { *d++ = '-'; v = -v; } do { b[n++] = (char)('0' + v % 10); v /= 10; } while (v && n < 11); while (n) *d++ = b[--n]; *d = 0; }
 static void flash_msg(const char *s) { msg = s; msg_until = H->ms() + 1200u; if (!msg_until) msg_until = 1; dirty |= D_FOOT; }
 
 static void leds_update(void)
@@ -1080,7 +1126,7 @@ static void randomise(void)
         case T_ARP: a[i] = (uint8_t)(r < 0.3f ? 1 + (int)(r2 * 2.99f) : 0); break;
         case T_LEAD: { static const int pent[5] = {0, 3, 5, 7, 10};
             a[i] = (uint8_t)(r < 0.5f ? 57 + PI_(2, B_ROOT) + pent[(int)(r2 * 4.99f)] + (frnd01() < 0.3f ? 12 : 0) : 0); break; }
-        default: a[i] = (uint8_t)(r < 0.2f ? 1 + (int)(r2 * ((float)NMEME - 0.01f)) : 0); break;
+        default: a[i] = (uint8_t)(r < 0.2f ? ((meme_sel - 1) / 16) * 16 + 1 + (int)(r2 * 15.99f) : 0); break;
         }
     }
     dirty |= D_GRID;
@@ -1110,7 +1156,11 @@ static void live_key(int k, int down)
     case T_BASS: post(R_BASS, (uint8_t)(note - 24), 0); break;
     case T_ARP: post(R_ARP, (uint8_t)(1 + k % 3), 0); break;
     case T_LEAD: post(R_LEAD_ON, (uint8_t)note, 0); break;
-    default: { int m = KEY_STEP[k] >= 0 ? KEY_STEP[k] + 1 : 0; if (m >= 1 && m <= NMEME) { meme_sel = m; post(R_MEME, (uint8_t)m, 0); dirty |= D_FOOT; } }
+    default:
+        if (KEY_STEP[k] >= 0) { meme_sel = ((meme_sel - 1) / 16) * 16 + KEY_STEP[k] + 1; post(R_MEME, (uint8_t)meme_sel, 0); }
+        else if (KEY_BLACK[k] < 6) { meme_sel = KEY_BLACK[k] * 16 + (meme_sel - 1) % 16 + 1; post(R_MEME, (uint8_t)meme_sel, 0); flash_msg(BANKN[KEY_BLACK[k]]); }
+        else { static const int SH[5] = {-12, -5, 0, 7, 12}; live_shift = SH[KEY_BLACK[k] - 6]; }
+        dirty |= D_FOOT;
     }
     if (rec) {
         uint8_t *s = PAT[pat_edit].s[track];
@@ -1121,17 +1171,51 @@ static void live_key(int k, int down)
         dirty |= D_GRID;
     }
 }
+static void tap_tempo(void)
+{
+    static uint32_t last, iv[4]; static int n;
+    uint32_t now = H->ms(), d = now - last;
+    last = now;
+    if (d < 250u || d > 1500u) { n = 0; flash_msg("TAP"); return; }
+    iv[n % 4] = d; n++;
+    uint32_t sum = 0; int c = n < 4 ? n : 4;
+    for (int i = 0; i < c; i++) sum += iv[i];
+    float bpm = clampf(60000.0f * (float)c / (float)sum, 60.0f, 200.0f);
+    V[CTX_GLO][G_BPM] = (float)(int)(bpm + 0.5f);
+    static char m[16]; m[0] = 0; cat_(m, "TAP "); fmt_num_(m, (int)V[CTX_GLO][G_BPM]); cat_(m, " BPM");
+    flash_msg(m);
+    dirty |= D_HEAD | D_PAR;
+}
+static void shift_track(int dir)
+{
+    uint8_t *a = PAT[pat_edit].s[track], t;
+    if (dir > 0) { t = a[NSTEP - 1]; for (int i = NSTEP - 1; i > 0; i--) a[i] = a[i - 1]; a[0] = t; }
+    else { t = a[0]; for (int i = 0; i < NSTEP - 1; i++) a[i] = a[i + 1]; a[NSTEP - 1] = t; }
+    flash_msg(dir > 0 ? "PATTERN >>" : "<< PATTERN");
+    dirty |= D_GRID;
+}
 static void ui(uint32_t ev, int32_t arg)
 {
     uint32_t kind = HB_EV_KIND(ev), id = HB_EV_ID(ev);
-    static uint32_t held;                                /* buttons held */
+    static uint32_t held, sel_down, home_down;           /* buttons held */
+    static int sel_used;
+    if ((kind == HB_EV_BTN_DOWN && id != HB_BTN_SEL) || kind == HB_EV_KEY_DOWN || kind == HB_EV_ENC)
+        if (held & (1u << HB_BTN_SEL)) sel_used = 1;
     if (kind == HB_EV_BTN_DOWN) {
         held |= 1u << id;
         switch (id) {
+        case HB_BTN_SEL: sel_down = H->ms(); sel_used = 0; break;
+        case HB_BTN_HOME: home_down = H->ms(); break;
         case HB_BTN_PLAY: post(playing ? R_STOP : R_START, 0, 0); dirty |= D_HEAD | D_GRID; break;
         case HB_BTN_REC: rec = !rec; dirty |= D_FOOT; break;
         case HB_BTN_SEQ: step_mode = !step_mode; dirty |= D_FOOT; break;
-        case HB_BTN_EDIT: page = (page + 1) % npages(ctx); dirty |= D_PAR | D_TITLE; break;
+        case HB_BTN_EDIT: {                             /* copy the pattern into the next one, go there */
+            int to = (pat_edit + 1) % NPAT;
+            PAT[to] = PAT[pat_edit];
+            pat_edit = (uint8_t)to; pat_next = pat_edit; if (!playing) pat_play = pat_edit;
+            static char m[16] = "KOPIE -> P1"; m[10] = (char)('1' + to); flash_msg(m);
+            dirty |= D_ALL; break;
+        }
         case HB_BTN_ENV: ctx = track; page = 0; dirty |= D_ALL; break;
         case HB_BTN_FX: ctx = CTX_MIX; page = 0; dirty |= D_ALL; break;
         case HB_BTN_GLO: ctx = CTX_GLO; page = 0; dirty |= D_ALL; break;
@@ -1143,8 +1227,8 @@ static void ui(uint32_t ev, int32_t arg)
             if (held & (1u << HB_BTN_SEL)) { for (int i = 0; i < NSTEP; i++) PAT[pat_edit].s[track][i] = 0; flash_msg("SPUR GELOESCHT"); }
             else { randomise(); flash_msg("DICE!"); }
             dirty |= D_GRID; break;
-        case HB_BTN_OCT_DOWN: if (octave > -2) octave--; flash_msg(octave == -2 ? "OKT -2" : octave == -1 ? "OKT -1" : octave == 0 ? "OKT 0" : "OKT +1"); break;
-        case HB_BTN_OCT_UP: if (octave < 2) octave++; flash_msg(octave == 2 ? "OKT +2" : octave == 1 ? "OKT +1" : octave == 0 ? "OKT 0" : "OKT -1"); break;
+        case HB_BTN_OCT_DOWN: if (step_mode) { shift_track(-1); break; } if (octave > -2) octave--; flash_msg(octave == -2 ? "OKT -2" : octave == -1 ? "OKT -1" : octave == 0 ? "OKT 0" : "OKT +1"); break;
+        case HB_BTN_OCT_UP: if (step_mode) { shift_track(1); break; } if (octave < 2) octave++; flash_msg(octave == 2 ? "OKT +2" : octave == 1 ? "OKT +1" : octave == 0 ? "OKT 0" : "OKT -1"); break;
         case HB_BTN_SAVE:
             if (playing) { flash_msg("ERST STOP, DANN SAVE"); break; }
             flash_msg(store_save() == 0 ? "GESPEICHERT" : "SPEICHERN FEHLGESCHLAGEN"); break;
@@ -1152,6 +1236,10 @@ static void ui(uint32_t ev, int32_t arg)
         }
     } else if (kind == HB_EV_BTN_UP) {
         held &= ~(1u << id);
+        if (id == HB_BTN_SEL && !sel_used && H->ms() - sel_down < 400u) tap_tempo();
+        if (id == HB_BTN_HOME && H->ms() - home_down < 800u) {   /* back home: the track's first page, STEP mode */
+            ctx = track; page = 0; step_mode = 1; flash_msg("HOME"); dirty |= D_ALL;
+        }
     } else if (kind == HB_EV_ENC) {
         switch (id) {
         case HB_ENC_SELECT: { int t = ((track + arg) % NTR + NTR) % NTR; set_track(t); break; }
@@ -1325,15 +1413,17 @@ static void draw_foot(void)
     for (int t = 0; t < NTR; t++) {
         char l[2] = {TLET[t], 0};
         uint16_t c = mute[t] ? HB_RGB(70, 70, 70) : solo[t] ? HB_RGB(255, 210, 62) : TCOL[t];
-        if (t == track) H->cv_rect(2 + t * 16, 4, 15, 20, HB_RGB(64, 64, 76));
-        cv_center(2 + t * 16, 15, 6, 0, l, c);
+        if (t == track) H->cv_rect(2 + t * 14, 4, 13, 20, HB_RGB(64, 64, 76));
+        cv_center(2 + t * 14, 13, 6, 0, l, c);
     }
     if (msg && (int32_t)(H->ms() - msg_until) < 0) cv_right(236, 6, 0, msg, HB_RGB(255, 210, 62));
     else {
+        char b[8];
         s[0] = 0;
         cat(s, step_mode ? "STEP " : "PLAY ");
-        if (rec) cat(s, "REC ");
+        b[0] = (char)('A' + (meme_sel - 1) / 16); b[1] = ':'; b[2] = 0; cat(s, b);
         cat(s, MEMES[meme_sel - 1].name);
+        if (live_shift) { fmt_num(b, live_shift, 1); cat(s, " "); cat(s, b); }
         cv_right(236, 6, 0, s, rec ? HB_RGB(255, 90, 90) : MC_DIM);
     }
     H->cv_blit(0, 214);

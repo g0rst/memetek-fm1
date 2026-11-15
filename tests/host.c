@@ -201,11 +201,32 @@ int main(int argc, char **argv)
     btn(HB_BTN_SEQ);                                     /* PLAY mode */
     int quiet = 0;
     for (int m = 0; m < NMEME; m++) {
-        key(STEP_KEY[m], 1); key(STEP_KEY[m], 0);
-        double w = window(700);
+        if (m % 16 == 0) { for (int k = 0; k < 27; k++) if (KEY_BLACK[k] == m / 16) { key((uint32_t)k, 1); key((uint32_t)k, 0); } run_ms(2500); }
+        key(STEP_KEY[m % 16], 1); key(STEP_KEY[m % 16], 0);
+        if (meme_sel != m + 1) { printf("     meme_sel %d, wanted %d\n", meme_sel, m + 1); quiet++; }
+        double w = window(m == 82 ? 2000 : 900);
         if (w < 0.02) { printf("     meme %s quiet (%.3f)\n", MEMES[m].name, w); quiet++; }
+        else printf("     meme %-9s peak %.3f\n", MEMES[m].name, w);
     }
-    expect(quiet == 0, "every meme sounds");
+    expect(quiet == 0, "all 96 memes sound, keys pick them by bank");
+    /* the upper row's pitch keys in PLAY mode */
+    key(25, 1); key(25, 0);
+    expect(live_shift == 12, "MEME live pitch +12");
+    key(20, 1); key(20, 0);
+    expect(live_shift == 0, "MEME live pitch back to 0");
+    /* tap tempo on SEL, pattern copy on EDIT, shift on OCT in STEP mode, HOME */
+    for (int i = 0; i < 4; i++) { M->ui(HB_EV_BTN_DOWN | HB_BTN_SEL, 0); run_ms(50); M->ui(HB_EV_BTN_UP | HB_BTN_SEL, 0); run_ms(450); }
+    printf("     tapped bpm %.0f\n", (double)V[CTX_GLO][G_BPM]);
+    expect(V[CTX_GLO][G_BPM] > 115 && V[CTX_GLO][G_BPM] < 125, "tap tempo (500 ms: 120 BPM)");
+    int pe = pat_edit; btn(HB_BTN_EDIT);
+    expect(pat_edit == (pe + 1) % 4 && memcmp(&PAT[pe], &PAT[pat_edit], sizeof(pat_t)) == 0, "EDIT copies the pattern into the next");
+    btn(HB_BTN_HOME);
+    expect(step_mode == 1 && page == 0, "HOME: STEP mode, first page");
+    uint8_t first = PAT[pat_edit].s[track][0], last = PAT[pat_edit].s[track][15];
+    btn(HB_BTN_OCT_UP);
+    expect(PAT[pat_edit].s[track][1] == first && PAT[pat_edit].s[track][0] == last, "OCT+ in STEP mode shifts the track");
+    btn(HB_BTN_OCT_DOWN);
+    btn(HB_BTN_SEQ);
     snprintf(p, sizeof p, "%s/memetek-6-memes.ppm", dir); shot(p);
     /* the lead, live and recorded */
     enc(HB_ENC_SELECT, -1);
