@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* MEMETEK: an 8-bit tek groovebox for the M-VAVE FM-1, as an fm1-dock module.
+/* g0dsgift: a groovebox for 8-bit memetek on the M-VAVE FM-1, as an fm1-dock module.
  * Six tracks (TEK-KICK, HATS, 8-BIT BASS, CHIP ARP, 8-BIT LEAD, MEME FX), a 16-step sequencer with
  * four patterns, pages of parameters on the four knobs, a mixer, an echo, a bitcrusher.
  *
@@ -153,17 +153,18 @@ static const char *const L_DIST[] = {"SOFT", "HARD", "FOLD"};
 static const char *const L_HTYPE[] = {"METAL", "NOISE", "8-BIT", "SHAKER", "RIDE"};
 static const char *const L_ROLL[] = {"2x", "3x", "4x", "6x"};
 static const char *const L_ONOFF[] = {"AUS", "AN"};
-static const char *const L_WAVE4[] = {"SQUARE", "PULSE", "SAW", "TRI"};
 static const char *const L_NOTES[] = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
-static const char *const L_LTB[] = {"CUTOFF", "RESO", "PITCH", "F-ENV", "DECAY", "SUB", "VOL"};
+static const char *const L_LTB[] = {"CUTOFF", "RESO", "PITCH", "F-ENV", "DECAY", "SUB", "VOL", "TIMBRE"};
+static const char *const L_WAVES[] = {"SQUARE", "PULSE", "SAW", "TRI", "SUPERSAW", "FM", "PWM", "SYNC", "FOLD"};
+static const char *const L_FILT[] = {"LOWPASS", "BANDPASS", "HIGHPASS"};
 static const char *const L_RATE[] = {"4BAR", "2BAR", "1BAR", "1/2", "1/4", "1/8", "1/16", "1/32"};
 static const char *const L_SHAPE[] = {"SINE", "TRI", "SAW", "SQUARE", "S&H"};
 static const char *const L_ARATE[] = {"2/STP", "3/STP", "4/STP", "6/STP"};
 static const char *const L_DIR[] = {"UP", "DOWN", "PING", "RND"};
 static const char *const L_CHORD[] = {"MOLL", "DUR", "SUS", "POWER"};
-static const char *const L_LTC[] = {"PITCH", "VOL", "TONE", "PAN", "DECAY", "OKTAVE"};
-static const char *const L_LTL[] = {"PITCH", "VOL", "TONE", "PAN"};
-static const char *const L_LWAVE[] = {"SQUARE", "PULSE25", "PULSE12", "TRI", "SAW", "NOISE"};
+static const char *const L_LTC[] = {"PITCH", "VOL", "TONE", "PAN", "DECAY", "OKTAVE", "TIMBRE"};
+static const char *const L_LTL[] = {"PITCH", "VOL", "TONE", "PAN", "TIMBRE"};
+static const char *const L_LWAVE[] = {"SQUARE", "PULSE25", "PULSE12", "TRI", "SAW", "NOISE", "SUPERSAW", "FM", "PWM", "SYNC", "FOLD"};
 static const char *const L_LARP[] = {"AUS", "OKTAVE", "DUR", "MOLL"};
 static const char *const L_MMODE[] = {"NORMAL", "STUTTER"};
 static const char *const L_ETIME[] = {"1/16", "1/8", "3/16", "1/4"};
@@ -182,25 +183,28 @@ static const pdef_t D_HAT[] = {
     P("TUNE", 0.5f, 2, 0.01f, 1, F_X), P("ZU", 0.01f, 0.1f, 0.005f, 0.035f, F_MS), P("OFFEN", 0.08f, 0.6f, 0.01f, 0.22f, F_MS), P("VOL", 0, 1, 0.01f, 0.3f, F_PCT),
     PL("TYP", 4, 0, L_HTYPE), PL("ROLL", 3, 1, L_ROLL), P("HUMANIZE", 0, 1, 0.01f, 0, F_PCT), P("CHANCE", 0, 1, 0.01f, 1, F_PCT),
     P("TONE", 0.3f, 1.5f, 0.01f, 1, F_X), P("ACCENT", 0, 1, 0.01f, 0, F_PCT), P("STEREO", 0, 1, 0.01f, 0, F_PCT), PL("CHOKE", 1, 1, L_ONOFF)};
-enum { B_CUT, B_RES, B_FENV, B_DECAY, B_WAVE, B_SUB, B_GLIDE, B_VOL, B_ROOT, B_OCT, B_DUCK, B_DRIVE,
-       B_L1T, B_L1R, B_L1D, B_L1S, B_L2T, B_L2R, B_L2D, B_L2S };
+enum { B_CUT, B_RES, B_FENV, B_DECAY, B_WAVE, B_TIMB, B_SUB, B_VOL, B_ROOT, B_OCT, B_DUCK, B_DRIVE,
+       B_GLIDE, B_TENV, B_WIDTH, B_FTYPE, B_L1T, B_L1R, B_L1D, B_L1S, B_L2T, B_L2R, B_L2D, B_L2S };
 static const pdef_t D_BASS[] = {
     P("CUTOFF", 100, 5000, 10, 2400, F_HZ), P("RESO", 0.5f, 20, 0.1f, 6, F_Q), P("F-ENV", 0, 1, 0.01f, 0.8f, F_PCT), P("DECAY", 0.2f, 1.5f, 0.05f, 0.9f, F_X),
-    PL("WAVE", 3, 0, L_WAVE4), P("SUB", 0, 1, 0.01f, 0.5f, F_PCT), P("GLIDE", 0, 0.2f, 0.005f, 0, F_MS), P("VOL", 0, 1, 0.01f, 0.5f, F_PCT),
+    PL("WAVE", 8, 0, L_WAVES), P("TIMBRE", 0, 1, 0.01f, 0.5f, F_PCT), P("SUB", 0, 1, 0.01f, 0.5f, F_PCT), P("VOL", 0, 1, 0.01f, 0.5f, F_PCT),
     PL("ROOT", 11, 5, L_NOTES), P("OCT", -1, 1, 1, 0, F_ST), P("DUCK", 0, 1, 0.01f, 0, F_PCT), P("DRIVE", 0, 1, 0.01f, 0, F_PCT),
-    PL("LFO1 ZIEL", 6, 0, L_LTB), PL("RATE", 7, 4, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE),
-    PL("LFO2 ZIEL", 6, 2, L_LTB), PL("RATE", 7, 6, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE)};
-enum { A_RATE, A_DIR, A_WAVE, A_VOL, A_OCT, A_DECAY, A_VIB, A_CHORD, A_LT, A_LR, A_LD, A_LS };
+    P("GLIDE", 0, 0.2f, 0.005f, 0, F_MS), P("T-ENV", -1, 1, 0.01f, 0, F_PM), P("WIDTH", 0, 1, 0.01f, 0.5f, F_PCT), PL("FILTER", 2, 0, L_FILT),
+    PL("LFO1 ZIEL", 7, 0, L_LTB), PL("RATE", 7, 4, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE),
+    PL("LFO2 ZIEL", 7, 2, L_LTB), PL("RATE", 7, 6, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE)};
+enum { A_RATE, A_DIR, A_WAVE, A_VOL, A_OCT, A_DECAY, A_VIB, A_CHORD, A_LT, A_LR, A_LD, A_LS, A_TIMB, A_TENV, A_WIDTH };
 static const pdef_t D_ARP[] = {
-    PL("RATE", 3, 2, L_ARATE), PL("RICHTG", 3, 0, L_DIR), PL("WAVE", 3, 0, L_WAVE4), P("VOL", 0, 0.6f, 0.01f, 0.22f, F_PCT),
+    PL("RATE", 3, 2, L_ARATE), PL("RICHTG", 3, 0, L_DIR), PL("WAVE", 8, 0, L_WAVES), P("VOL", 0, 0.6f, 0.01f, 0.22f, F_PCT),
     P("OCT", -1, 2, 1, 0, F_ST), P("DECAY", 0.2f, 1, 0.01f, 0.98f, F_PCT), P("VIBRATO", 0, 1, 0.01f, 0, F_PCT), PL("AKKORD", 3, 0, L_CHORD),
-    PL("LFO ZIEL", 5, 0, L_LTC), PL("RATE", 7, 5, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE)};
-enum { L_WAVE, L_LEN, L_VIB, L_VOL, L_OCT, L_GLIDE, L_SWEEP, L_DET, L_ATT, L_DEC, L_SUS, L_ARP, L_LT, L_LR, L_LD, L_LS };
+    PL("LFO ZIEL", 6, 0, L_LTC), PL("RATE", 7, 5, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE),
+    P("TIMBRE", 0, 1, 0.01f, 0.5f, F_PCT), P("T-ENV", -1, 1, 0.01f, 0, F_PM), P("WIDTH", 0, 1, 0.01f, 0.5f, F_PCT), PN};
+enum { L_WAVE, L_LEN, L_VIB, L_VOL, L_OCT, L_GLIDE, L_SWEEP, L_DET, L_ATT, L_DEC, L_SUS, L_ARP, L_LT, L_LR, L_LD, L_LS, L_TIMB, L_TENV, L_WIDTH };
 static const pdef_t D_LEAD[] = {
-    PL("WAVE", 5, 0, L_LWAVE), P("LAENGE", 0.25f, 4, 0.25f, 1, F_X), P("VIBRATO", 0, 1, 0.01f, 0, F_PCT), P("VOL", 0, 1, 0.01f, 0.35f, F_PCT),
+    PL("WAVE", 10, 0, L_LWAVE), P("LAENGE", 0.25f, 4, 0.25f, 1, F_X), P("VIBRATO", 0, 1, 0.01f, 0, F_PCT), P("VOL", 0, 1, 0.01f, 0.35f, F_PCT),
     P("OCT", -2, 2, 1, 0, F_ST), P("GLIDE", 0, 0.3f, 0.005f, 0, F_MS), P("SWEEP", -12, 12, 1, 0, F_ST), P("DETUNE", 0, 1, 0.01f, 0, F_PCT),
     P("ATTACK", 0, 0.3f, 0.005f, 0, F_MS), P("DECAY", 0.05f, 2, 0.01f, 0.4f, F_S), P("SUSTAIN", 0, 1, 0.01f, 0.6f, F_PCT), PL("ARP", 3, 0, L_LARP),
-    PL("LFO ZIEL", 3, 0, L_LTL), PL("RATE", 7, 4, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE)};
+    PL("LFO ZIEL", 4, 0, L_LTL), PL("RATE", 7, 4, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE),
+    P("TIMBRE", 0, 1, 0.01f, 0.5f, F_PCT), P("T-ENV", -1, 1, 0.01f, 0, F_PM), P("WIDTH", 0, 1, 0.01f, 0.5f, F_PCT), PN};
 enum { M_PITCH, M_LEN, M_MODE, M_VOL, M_RND, M_ECHO, M_ETIME, M_FB };
 static const pdef_t D_MEME[] = {
     P("PITCH", -12, 12, 1, 0, F_ST), P("LAENGE", 0.1f, 1, 0.01f, 1, F_PCT), PL("MODE", 1, 0, L_MMODE), P("VOL", 0, 1, 0.01f, 0.5f, F_PCT),
@@ -224,7 +228,7 @@ static const pdef_t D_GLO[] = {
 #define NCTX 8
 #define MAXP 24
 static const pdef_t *const DEFS[NCTX] = {D_KICK, D_HAT, D_BASS, D_ARP, D_LEAD, D_MEME, D_MIX, D_GLO};
-static const uint8_t NDEF[NCTX] = {8, 12, 20, 12, 16, 8, 24, 4};
+static const uint8_t NDEF[NCTX] = {8, 12, 24, 16, 20, 8, 24, 4};
 static float V[NCTX][MAXP];
 
 static float *pval(int ctx, int i)
@@ -473,9 +477,81 @@ static void hats_run(float *l, float *r, int a, int b)
     }
 }
 
+/* ------------------------------------------------------------------ the synth oscillator
+ * The classic 8-bit waves and more synthesis, one call per sample, stereo out:
+ *   SQUARE PULSE SAW TRI   naive, aliasing on purpose (8-bit)
+ *   SUPERSAW               seven detuned saws (TIMBRE: the detune), spread over the stereo field (WIDTH)
+ *   FM                     two-operator phase modulation (TIMBRE: the index), the modulator an octave up
+ *   PWM                    a pulse whose width an internal LFO moves (TIMBRE: the depth)
+ *   SYNC                   a hard-synced saw (TIMBRE: the slave's pitch)
+ *   FOLD                   a sine through a wavefolder (TIMBRE: the drive)
+ *   PULSE12, NOISE         the lead's thin pulse and the 8-bit noise channel */
+enum { O_SQUARE, O_PULSE, O_SAW, O_TRI, O_SUPER, O_FM, O_PWM, O_SYNC, O_FOLD, O_PULSE12, O_NOISE };
+static float NOISE64[64];
+typedef struct { float ph[7], mph, pwm; } osc_t;
+static const float SSD[7] = {-0.11002313f, -0.06288439f, -0.01952356f, 0.0f, 0.01991221f, 0.06216538f, 0.10745242f};
+static void osc_reset(osc_t *o, int free_run)
+{
+    if (free_run) for (int k = 0; k < 7; k++) o->ph[k] = frnd01();    /* a supersaw starts unaligned: no flam */
+    else for (int k = 0; k < 7; k++) o->ph[k] = 0.0f;
+    o->mph = 0.0f;
+}
+static inline void osc_run(osc_t *o, int m, float f, float tim, float width, float *ol, float *orr)
+{
+    float x;
+    switch (m) {
+    case O_SUPER: {
+        float d = 0.04f + tim * 0.96f, sl = 0.0f, sr = 0.0f, wl = 0.5f + 0.5f * width, wr = 0.5f - 0.5f * width;
+        for (int k = 0; k < 7; k++) {
+            o->ph[k] = wrap1(o->ph[k] + f * (1.0f + SSD[k] * d) * INV_FS);
+            float s = 2.0f * o->ph[k] - 1.0f;
+            if (k == 3) { sl += s; sr += s; }
+            else if (k & 1) { sl += 0.6f * s * wl; sr += 0.6f * s * wr; }
+            else { sl += 0.6f * s * wr; sr += 0.6f * s * wl; }
+        }
+        *ol = sl * 0.42f; *orr = sr * 0.42f;
+        return;
+    }
+    case O_FM:
+        o->ph[0] = wrap1(o->ph[0] + f * INV_FS);
+        o->mph = wrap1(o->mph + 2.0f * f * INV_FS);
+        x = fsin1(o->ph[0] + tim * 0.9f * fsin1(o->mph));
+        break;
+    case O_PWM: {
+        o->ph[0] = wrap1(o->ph[0] + f * INV_FS);
+        o->pwm += 0.7f * INV_FS;
+        if (o->pwm >= 1.0f) o->pwm -= 1.0f;
+        float w = 0.5f + 0.45f * tim * fsin1(o->pwm);
+        x = o->ph[0] < w ? 1.0f : -1.0f;
+        break;
+    }
+    case O_SYNC: {
+        float p = o->ph[0] + f * INV_FS;
+        if (p >= 1.0f) { p -= 1.0f; o->ph[1] = 0.0f; }
+        o->ph[0] = p;
+        o->ph[1] = wrap1(o->ph[1] + f * (1.0f + tim * 7.0f) * INV_FS);
+        x = 2.0f * o->ph[1] - 1.0f;
+        break;
+    }
+    case O_FOLD:
+        o->ph[0] = wrap1(o->ph[0] + f * INV_FS);
+        x = fsin1(fsin1(o->ph[0]) * (1.0f + tim * 6.0f) * 0.25f);
+        break;
+    case O_NOISE:
+        o->ph[0] = wrap1(o->ph[0] + f * INV_FS);
+        x = NOISE64[(int)(o->ph[0] * 64.0f) & 63];
+        break;
+    default:
+        o->ph[0] = wrap1(o->ph[0] + f * INV_FS);
+        x = wave(m == O_PULSE12 ? 4 : m, o->ph[0]);   /* wave(): 0 square 1 pulse25 2 saw 3 tri 4 pulse12 */
+        break;
+    }
+    *ol = x; *orr = x;
+}
+
 /* ------------------------------------------------------------------ BASS */
 static const int IV[4] = {0, 0, 7, 12};
-static struct { int on, att, cr; float ph, phs, f, ft, kg, amp, peak, ka, cut, kc, decm, fenv; svf_t lp; } bass;
+static struct { int on, att, cr; float ph, phs, f, ft, kg, amp, peak, ka, cut, kc, decm, fenv, tenv, ktenv; osc_t o; svf_t lp, lp2; } bass;
 static float bass_lastf;
 static inline float bfreq(int semi) { return 55.0f * semis((float)semi); }
 static void bass_trig(int lv)
@@ -491,6 +567,7 @@ static void bass_trig(int lv)
     if (V[2][B_GLIDE] > 0.0f && bass_lastf > 0.0f) { bass.f = bass_lastf; bass.kg = decay_k(V[2][B_GLIDE] * 0.33f, -1.0f); }
     else { bass.f = f; bass.kg = 0.0f; }
     bass_lastf = f;
+    if (!bass.on) osc_reset(&bass.o, PI_(2, B_WAVE) == O_SUPER);
     bass.on = 1; bass.att = (int)(0.003f * FS); bass.peak = 0.8f; bass.amp = 0.0f;
     bass.ka = decay_k(ln * 0.95f, LN_1000);
     bass.fenv = clampf(V[2][B_FENV] + mfe, 0.0f, 1.0f);
@@ -500,14 +577,15 @@ static void bass_trig(int lv)
     float upd = ln * 0.8f * FS / 16.0f;
     if (upd < 1.0f) upd = 1.0f;
     bass.kc = fexp2(flog2(endf) / upd);
+    bass.tenv = 1.0f; bass.ktenv = fexp2(flog2(0.05f) / (upd * 0.5f > 1.0f ? upd * 0.5f : 1.0f));
     bass.cr = 0;
 }
 static void bass_run(float *l, float *r, int a, int b)
 {
     if (!bass.on) return;
-    int w = PI_(2, B_WAVE);
-    static float sub = 0, vol = 1, pm = 1;
-    float k = 0.5f + V[2][B_DRIVE] * 10.0f, nk = 1.0f / ftanh(k);
+    int w = PI_(2, B_WAVE), fm = PI_(2, B_FTYPE);
+    static float sub = 0, vol = 1, pm = 1, tim = 0.5f;
+    float k = 0.5f + V[2][B_DRIVE] * 10.0f, nk = 1.0f / ftanh(k), width = V[2][B_WIDTH];
     for (int i = a; i < b; i++) {
         if ((bass.cr++ & 15) == 0) {
             int t1, t2;
@@ -516,25 +594,31 @@ static void bass_run(float *l, float *r, int a, int b)
             float m2 = lfo_val(2, B_L2T, B_L2R, B_L2D, B_L2S, pos, 2000, &t2);
             float mc = (t1 == 0 ? m1 : 0) + (t2 == 0 ? m2 : 0), mr = (t1 == 1 ? m1 : 0) + (t2 == 1 ? m2 : 0);
             float mp = (t1 == 2 ? m1 : 0) + (t2 == 2 ? m2 : 0), ms = (t1 == 5 ? m1 : 0) + (t2 == 5 ? m2 : 0);
-            float mv = (t1 == 6 ? m1 : 0) + (t2 == 6 ? m2 : 0);
+            float mv = (t1 == 6 ? m1 : 0) + (t2 == 6 ? m2 : 0), mt = (t1 == 7 ? m1 : 0) + (t2 == 7 ? m2 : 0);
             float fc = clampf(V[2][B_CUT] * fexp2(3.0f * mc), 60.0f, 12000.0f) * bass.cut;
             svf_set(&bass.lp, fc < 50.0f ? 50.0f : fc, qdb(clampf(V[2][B_RES] + mr * 10.0f, 0.5f, 25.0f)));
+            bass.lp2.g = bass.lp.g; bass.lp2.k = bass.lp.k; bass.lp2.a1 = bass.lp.a1; bass.lp2.a2 = bass.lp.a2; bass.lp2.a3 = bass.lp.a3;
             pm = mp != 0.0f ? semis(mp * 12.0f) : 1.0f;
             sub = clampf(V[2][B_SUB] + ms, 0.0f, 1.0f);
             vol = clampf(1.0f + mv, 0.0f, 2.0f);
+            tim = clampf(V[2][B_TIMB] + V[2][B_TENV] * bass.tenv + mt, 0.0f, 1.0f);
+            bass.tenv *= bass.ktenv;
             bass.cut *= bass.kc;
             float floorc = 1.0f - bass.fenv * 0.92f;
             if (bass.cut < floorc) bass.cut = floorc;
         }
         if (bass.kg > 0.0f) bass.f = bass.ft + (bass.f - bass.ft) * bass.kg;
-        float f = bass.f * pm;
-        bass.ph = wrap1(bass.ph + f * INV_FS);
+        float f = bass.f * pm, xl, xr;
+        osc_run(&bass.o, w, f, tim, width, &xl, &xr);
         bass.phs = wrap1(bass.phs + f * 0.5f * INV_FS);
-        float x = svf_run(&bass.lp, wave(w, bass.ph), 0) + wave(3, bass.phs) * sub;
+        float s = wave(3, bass.phs) * sub;
+        xl = svf_run(&bass.lp, xl, fm) + s;
+        xr = (w == O_SUPER ? svf_run(&bass.lp2, xr, fm) : xl - s) + s;
         if (bass.att > 0) { bass.amp += bass.peak / (0.003f * FS); bass.att--; } else bass.amp *= bass.ka;
-        x *= bass.amp * vol;
-        x = ftanh(k * x) * nk * duck_g;
-        l[i] += x; r[i] += x;
+        float g = bass.amp * vol;
+        xl = ftanh(k * xl * g) * nk * duck_g;
+        xr = ftanh(k * xr * g) * nk * duck_g;
+        l[i] += xl; r[i] += xr;
     }
     if (!bass.att && bass.amp < 0.0005f) bass.on = 0;
 }
@@ -542,7 +626,7 @@ static void bass_run(float *l, float *r, int a, int b)
 /* ------------------------------------------------------------------ CHIP ARP */
 static const int CHORDS[4][4] = {{0, 3, 7, 12}, {0, 4, 7, 12}, {0, 5, 7, 12}, {0, 7, 12, 19}};
 static const int CHL[4] = {0, 0, 5, 7};
-static struct { int on, n, idx, sub, cnt, cr; float ph, f[6], amp, ka, vph, lpan; svf_t lp; int tg; } arp;
+static struct { int on, n, idx, sub, cnt, cr; float f[6], amp, ka, vph, tenv, ktenv; osc_t o; svf_t lp, lp2; } arp;
 static void arp_trig(int lv)
 {
     int tg;
@@ -561,16 +645,19 @@ static void arp_trig(int lv)
         arp.f[i] = bfreq(base + ch[k]);
     }
     float ln = sps * INV_FS * clampf(V[3][A_DECAY] * decm, 0.1f, 2.0f);
+    if (!arp.on) osc_reset(&arp.o, PI_(3, A_WAVE) == O_SUPER);
     arp.on = 1; arp.n = n; arp.idx = 0; arp.sub = (int)(sps / (float)n); arp.cnt = 0; arp.cr = 0;
     arp.amp = 0.9f; arp.ka = decay_k(ln * 0.98f, LN_1000);
-    arp.lp.ic1 = arp.lp.ic2 = 0.0f;
+    arp.tenv = 1.0f; arp.ktenv = decay_k(ln * 0.3f / 16.0f, -1.0f);
+    arp.lp.ic1 = arp.lp.ic2 = arp.lp2.ic1 = arp.lp2.ic2 = 0.0f;
 }
 static void arp_run(float *l, float *r, int a, int b)
 {
     if (!arp.on) return;
     int w = PI_(3, A_WAVE);
-    static float pm = 1, vm = 1, gl = 1, gr = 1;
+    static float pm = 1, vm = 1, gl = 1, gr = 1, tim = 0.5f;
     static int tone;
+    float width = V[3][A_WIDTH];
     for (int i = a; i < b; i++) {
         if ((arp.cr++ & 15) == 0) {
             int tg;
@@ -580,26 +667,33 @@ static void arp_run(float *l, float *r, int a, int b)
             if (V[3][A_VIB] > 0.0f) pm *= semis(fsin1(arp.vph) * V[3][A_VIB] * 0.6f);
             vm = (on && tg == 1) ? clampf(1.0f + v, 0.0f, 2.0f) : 1.0f;
             tone = on && tg == 2;
-            if (tone) svf_set(&arp.lp, clampf(2500.0f * fexp2(v * 2.3f), 200.0f, 16000.0f), qdb(2.0f));
+            if (tone) {
+                svf_set(&arp.lp, clampf(2500.0f * fexp2(v * 2.3f), 200.0f, 16000.0f), qdb(2.0f));
+                arp.lp2.g = arp.lp.g; arp.lp2.k = arp.lp.k; arp.lp2.a1 = arp.lp.a1; arp.lp2.a2 = arp.lp.a2; arp.lp2.a3 = arp.lp.a3;
+            }
             float p = (on && tg == 3) ? clampf(v, -1.0f, 1.0f) : 0.0f;
             gl = p > 0 ? 1.0f - p : 1.0f; gr = p < 0 ? 1.0f + p : 1.0f;
+            tim = clampf(V[3][A_TIMB] + V[3][A_TENV] * arp.tenv + ((on && tg == 6) ? v : 0.0f), 0.0f, 1.0f);
+            arp.tenv *= arp.ktenv;
         }
         arp.vph += 6.0f * INV_FS;
         if (++arp.cnt >= arp.sub && arp.idx < arp.n - 1) { arp.cnt = 0; arp.idx++; }
-        arp.ph = wrap1(arp.ph + arp.f[arp.idx] * pm * INV_FS);
-        float x = wave(w, arp.ph) * arp.amp * vm;
-        if (tone) x = svf_run(&arp.lp, x, 0);
+        float xl, xr;
+        osc_run(&arp.o, w, arp.f[arp.idx] * pm, tim, width, &xl, &xr);
+        float g = arp.amp * vm;
+        xl *= g; xr *= g;
+        if (tone) { xl = svf_run(&arp.lp, xl, 0); xr = svf_run(&arp.lp2, xr, 0); }
         arp.amp *= arp.ka;
-        l[i] += x * gl; r[i] += x * gr;
+        l[i] += xl * gl; r[i] += xr * gr;
     }
     if (arp.amp < 0.0005f) arp.on = 0;
 }
 
 /* ------------------------------------------------------------------ 8-BIT LEAD */
-static float NOISE64[64];
 static const int LARP[4][3] = {{0, 0, 0}, {0, 12, 12}, {0, 4, 7}, {0, 3, 7}};
 static const int LARPN[4] = {1, 2, 3, 3};
-static struct { int on, gate, note, arpi, arpc, cr, stage; float ph1, ph2, f, ft, kg, amp, vph, kdec, krel; svf_t lp; } lead;
+static const uint8_t LWMAP[11] = {O_SQUARE, O_PULSE, O_PULSE12, O_TRI, O_SAW, O_NOISE, O_SUPER, O_FM, O_PWM, O_SYNC, O_FOLD};
+static struct { int on, gate, note, arpi, arpc, cr, stage; float f, ft, kg, amp, vph, kdec, krel, tenv, ktenv; osc_t o, o2; svf_t lp, lp2; } lead;
 static float lead_lastf;
 static void lead_on(int note)
 {
@@ -608,10 +702,12 @@ static void lead_on(int note)
     else if (V[4][L_SWEEP] != 0.0f) { lead.f = f * semis(V[4][L_SWEEP]); lead.kg = decay_k(0.02f, -1.0f); }
     else { lead.f = f; lead.kg = 0.0f; }
     lead.ft = f; lead_lastf = f;
+    if (!lead.on) { int m = LWMAP[PI_(4, L_WAVE)]; osc_reset(&lead.o, m == O_SUPER); osc_reset(&lead.o2, 1); }
     lead.on = 1; lead.gate = 1; lead.note = note; lead.stage = 0;
     if (!(V[4][L_GLIDE] > 0.0f)) lead.amp = 0.0f;
     lead.kdec = decay_k(V[4][L_DEC] * 0.33f, -1.0f);
     lead.krel = decay_k(0.02f, -1.0f);
+    lead.tenv = 1.0f; lead.ktenv = decay_k(V[4][L_DEC] * 0.3f / 16.0f, -1.0f);
     lead.arpi = 0; lead.arpc = 0;
 }
 static void lead_off(int note)
@@ -621,11 +717,12 @@ static void lead_off(int note)
 static void lead_run(float *l, float *r, int a, int b)
 {
     if (!lead.on) return;
-    int w = PI_(4, L_WAVE), arpm = PI_(4, L_ARP);
-    float det = V[4][L_DET], att = V[4][L_ATT], sus = V[4][L_SUS];
-    static float pm = 1, vm = 1, gl = 1, gr = 1;
+    int m = LWMAP[PI_(4, L_WAVE)], arpm = PI_(4, L_ARP);
+    float det = V[4][L_DET], att = V[4][L_ATT], sus = V[4][L_SUS], width = V[4][L_WIDTH];
+    static float pm = 1, vm = 1, gl = 1, gr = 1, tim = 0.5f;
     static int tone;
     int arps = (int)(sps * 0.25f);
+    int dual = det > 0.0f && m != O_SUPER;
     for (int i = a; i < b; i++) {
         if ((lead.cr++ & 15) == 0) {
             int tg;
@@ -635,9 +732,14 @@ static void lead_run(float *l, float *r, int a, int b)
             if (V[4][L_VIB] > 0.0f) pm *= semis(fsin1(lead.vph) * V[4][L_VIB] * 0.45f);
             vm = (on && tg == 1) ? clampf(1.0f + v, 0.0f, 2.0f) : 1.0f;
             tone = on && tg == 2;
-            if (tone) svf_set(&lead.lp, clampf(2500.0f * fexp2(v * 2.3f), 200.0f, 16000.0f), qdb(2.0f));
+            if (tone) {
+                svf_set(&lead.lp, clampf(2500.0f * fexp2(v * 2.3f), 200.0f, 16000.0f), qdb(2.0f));
+                lead.lp2.g = lead.lp.g; lead.lp2.k = lead.lp.k; lead.lp2.a1 = lead.lp.a1; lead.lp2.a2 = lead.lp.a2; lead.lp2.a3 = lead.lp.a3;
+            }
             float p = (on && tg == 3) ? clampf(v, -1.0f, 1.0f) : 0.0f;
             gl = p > 0 ? 1.0f - p : 1.0f; gr = p < 0 ? 1.0f + p : 1.0f;
+            tim = clampf(V[4][L_TIMB] + V[4][L_TENV] * lead.tenv + ((on && tg == 4) ? v : 0.0f), 0.0f, 1.0f);
+            lead.tenv *= lead.ktenv;
         }
         lead.vph += 6.0f * INV_FS;
         if (lead.kg > 0.0f) lead.f = lead.ft + (lead.f - lead.ft) * lead.kg;
@@ -646,16 +748,12 @@ static void lead_run(float *l, float *r, int a, int b)
             if (++lead.arpc >= arps) { lead.arpc = 0; lead.arpi = (lead.arpi + 1) % LARPN[arpm]; }
             f *= semis((float)LARP[arpm][lead.arpi]);
         }
-        float x;
-        if (w == 5) {
-            lead.ph1 = wrap1(lead.ph1 + f * INV_FS);
-            x = NOISE64[(int)(lead.ph1 * 64.0f) & 63];
-        } else {
-            static const int WMAP[5] = {0, 1, 4, 3, 2};
-            float d = det * 0.0116f;                    /* ~20 cents */
-            lead.ph1 = wrap1(lead.ph1 + f * (1.0f - d) * INV_FS);
-            x = wave(WMAP[w], lead.ph1);
-            if (det > 0.0f) { lead.ph2 = wrap1(lead.ph2 + f * (1.0f + d) * INV_FS); x = 0.5f * (x + wave(WMAP[w], lead.ph2)); }
+        float xl, xr, d = det * 0.0116f;                /* DETUNE: a second oscillator, ~20 cents apart */
+        osc_run(&lead.o, m, dual ? f * (1.0f - d) : f, tim, width, &xl, &xr);
+        if (dual) {
+            float yl, yr;
+            osc_run(&lead.o2, m, f * (1.0f + d), tim, width, &yl, &yr);
+            xl = 0.5f * (xl + yl); xr = 0.5f * (xr + yr);
         }
         /* envelope: attack to .5, then towards .5 * sustain; release */
         if (lead.gate) {
@@ -664,9 +762,9 @@ static void lead_run(float *l, float *r, int a, int b)
                 if (lead.amp >= 0.5f) { lead.amp = 0.5f; lead.stage = 1; }
             } else lead.amp = 0.5f * sus + (lead.amp - 0.5f * sus) * lead.kdec;
         } else lead.amp *= lead.krel;
-        if (tone) x = svf_run(&lead.lp, x, 0);
-        x *= lead.amp * vm;
-        l[i] += x * gl; r[i] += x * gr;
+        if (tone) { xl = svf_run(&lead.lp, xl, 0); xr = svf_run(&lead.lp2, xr, 0); }
+        float g = lead.amp * vm;
+        l[i] += xl * g * gl; r[i] += xr * g * gr;
     }
     if (!lead.gate && lead.amp < 0.0003f) lead.on = 0;
 }
@@ -1221,7 +1319,7 @@ static void ui(uint32_t ev, int32_t arg)
         case HB_BTN_GLO: ctx = CTX_GLO; page = 0; dirty |= D_ALL; break;
         case HB_BTN_LFO:                                 /* the track's LFO page, where it has one */
             ctx = track;
-            page = track == T_BASS ? 3 : track == T_ARP ? 2 : track == T_LEAD ? 3 : 0;
+            page = track == T_BASS ? 4 : track == T_ARP ? 2 : track == T_LEAD ? 3 : 0;
             dirty |= D_ALL; break;
         case HB_BTN_ARP:
             if (held & (1u << HB_BTN_SEL)) { for (int i = 0; i < NSTEP; i++) PAT[pat_edit].s[track][i] = 0; flash_msg("SPUR GELOESCHT"); }
@@ -1334,7 +1432,7 @@ static void cv_center(int32_t x, int32_t w, int32_t y, uint32_t big, const char 
 /* rows: head 0..25, title 28..63, grid 68..123, params 128..211, foot 214..239 */
 static void draw_head(void)
 {
-    char s[40] = "MEMETEK  P", b[12];
+    char s[40] = "g0dsgift  P", b[12];
     fmt_num(b, pat_edit + 1, 0); cat(s, b);
     if (chain_on) cat(s, " CHAIN");
     H->cv_begin(240, 26, MC_BG);
@@ -1465,7 +1563,7 @@ static int init(const hb_host_t *h)
     store_load();
     for (int t = 0; t < NTR; t++) trk_g[t] = 0.0f;
     dirty = 0xFFFFFFFFu;
-    H->log("memetek: ready");
+    H->log("g0dsgift: ready");
     return 0;
 }
 static void release(void)
@@ -1475,4 +1573,4 @@ static void release(void)
     for (int v = 0; v < NMV; v++) mv[v].on = 0;
 }
 static const hb_param_t PARAMS[] = {{"BPM", 60, 200, 160}};
-HB_DESC = {HB_ABI, "MEMETEK", init, release, note, cc, render, ui, draw, PARAMS, 1, HB_F_SCREEN | HB_F_PANEL, 0, 0};
+HB_DESC = {HB_ABI, "G0DSGIFT", init, release, note, cc, render, ui, draw, PARAMS, 1, HB_F_SCREEN | HB_F_PANEL, 0, 0};

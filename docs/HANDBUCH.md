@@ -1,23 +1,25 @@
-# MEMETEK – Handbuch
+# g0dsgift – Handbuch
 
 <!-- GEN:VERSION -->
-**Version 0.3**
+**Version 0.4**
 <!-- /GEN:VERSION -->
- · 8-Bit-Tek-Groovebox für das M-VAVE FM-1 · [Seite mit Emulator](https://g0rst.github.io/memetek-fm1/) · [Quellcode](https://github.com/g0rst/memetek-fm1)
+ · die Groovebox für **8-Bit-Memetek** auf dem M-VAVE FM-1 · [English manual](manual.html) · [Seite mit Emulator](https://g0rst.github.io/memetek-fm1/) · [Quellcode](https://github.com/g0rst/memetek-fm1)
 
 > Dieses Handbuch gehört zur Firmware und wird mit jeder neuen Version aktualisiert. Die Tabellen mit Parametern und
 > Sounds werden direkt aus dem Firmware-Code erzeugt.
-> MEMETEK ist noch jung und wurde bisher nur im FM-1-Emulator getestet. Das Installieren auf echter Hardware geschieht auf eigene Gefahr.
+> g0dsgift ist noch jung und wurde bisher nur im FM-1-Emulator getestet. Das Installieren auf echter Hardware geschieht auf eigene Gefahr.
 
 [TOC]
 
-## 1. Was ist MEMETEK?
+## 1. Was ist g0dsgift?
 
-MEMETEK macht aus dem FM-1 eine Groovebox für Memecore, Tek und 8-Bit-Musik:
+**8-Bit-Memetek** ist das Genre: Tek-Kicks und rollende Bässe, 8-Bit-Klänge alter Spielkonsolen und Meme-Sounds,
+laut, schnell und albern. **g0dsgift** ist das Gerät dafür. Es macht aus dem FM-1 eine Groovebox für genau diese Musik:
 
 - **6 Spuren:** TEK-KICK, HI-HATS, 8BIT BASS, CHIP ARP, 8BIT LEAD, MEME FX
 - **16-Step-Sequencer** mit 4 Pattern, Chain, Kopieren, Verschieben, Würfeln und Live-Aufnahme
 - **96 Meme-Sounds** in 6 Bänken, jeder Sound wird live erzeugt (keine Samples)
+- **Synthese:** Square, Pulse, Saw, Triangle, **Supersaw**, FM, PWM, Sync und Fold für Bass, Arp und Lead
 - **Klangbearbeitung über Seiten:** Die 4 Knobs regeln immer die 4 Parameter der aktuellen Seite, dazu 4 LFOs (2× Bass, Arp, Lead)
 - **Mixer** mit Lautstärke, Panorama und Echo für jede Spur, außerdem Bitcrusher, Drive und Kompressor für die Summe
 
@@ -25,7 +27,7 @@ MEMETEK macht aus dem FM-1 eine Groovebox für Memecore, Tek und 8-Bit-Musik:
 
 ### Ohne Gerät ausprobieren
 
-Auf der [MEMETEK-Seite](https://g0rst.github.io/memetek-fm1/) auf **„Im FM-1-Emulator testen“** tippen. Dort läuft
+Auf der [g0dsgift-Seite](https://g0rst.github.io/memetek-fm1/) auf **„Im FM-1-Emulator testen“** tippen. Dort läuft
 dieselbe Firmware wie auf dem Gerät, in einem nachgebauten FM-1. Auf alten Computern kann der Emulator zu langsam sein, auf
 einem aktuellen Handy läuft er gut.
 
@@ -35,13 +37,13 @@ Du brauchst Chrome oder Edge an einem Computer und ein USB-Datenkabel.
 
 1. **fm1-dock installieren** (nur einmal): Auf der [fm1-dock-Seite](https://joakimeriksson.github.io/fm1-dock/#install)
    „Connect over USB“ und dann „Install fm1-dock“ wählen.
-2. **MEMETEK laden:** Im [neuesten Release](https://github.com/g0rst/memetek-fm1/releases) `memetek.dock` herunterladen und auf die
+2. **g0dsgift laden:** Im [neuesten Release](https://github.com/g0rst/memetek-fm1/releases) `g0dsgift.dock` herunterladen und auf die
    [fm1-dock-Konsole](https://joakimeriksson.github.io/fm1-dock/#console) ziehen.
-3. Am FM-1 **HOME** etwa 1,5 Sekunden halten und **MEMETEK** auswählen.
+3. Am FM-1 **HOME** etwa 1,5 Sekunden halten und **G0DSGIFT** auswählen.
 
-Alternativ ist `memetek.fwsc` dieselbe Firmware als eigenständiges Paket, also fm1-dock mit nur MEMETEK.
+Alternativ ist `g0dsgift.fwsc` dieselbe Firmware als eigenständiges Paket, also fm1-dock mit nur g0dsgift.
 
-**Updates:** Die neue `memetek.dock` einfach erneut auf die Konsole ziehen.
+**Updates:** Die neue `g0dsgift.dock` einfach erneut auf die Konsole ziehen. Vor v0.4 hieß das Gerät MEMETEK: das alte Modul in der fm1-dock-Konsole löschen.
 
 **Zurück zur Original-Firmware:** über den [FM-1 Firmware Hub](https://fm1.designburgapps.com) oder M-VAVEs eigenen Updater.
 Ein Modul, das zweimal hintereinander abstürzt, überspringt fm1-dock beim Start automatisch.
@@ -84,7 +86,7 @@ Ein Modul, das zweimal hintereinander abstürzt, überspringt fm1-dock beim Star
 
 ## 4. Das Display
 
-- **Kopfzeile:** MEMETEK, das bearbeitete Pattern (P1–P4), CHAIN wenn aktiv, rechts `>` (läuft) oder `||` (Stopp) mit dem Tempo
+- **Kopfzeile:** g0dsgift, das bearbeitete Pattern (P1–P4), CHAIN wenn aktiv, rechts `>` (läuft) oder `||` (Stopp) mit dem Tempo
 - **Titel:** die Spur in ihrer Farbe (oder MIXER / GLOBAL), rechts die Seite, z. B. `S2/5`
 - **Step-Raster:** 16 Felder in zwei Reihen. Farbig ist ein gesetzter Step, weiß der gerade gespielte. Das Kürzel im Feld
   zeigt den Wert (siehe unten). Bei LEAD markiert ein Strich den Cursor für die Aufnahme
@@ -138,7 +140,7 @@ Die Live-Tonhöhe der Memes gilt auch für die Memes im laufenden Pattern. So la
 ## 6. Pattern, Chain, Kopieren, Würfeln
 
 - **4 Pattern** (P1–P4) enthalten jeweils alle 6 Spuren. Wählen im STEP-Modus mit **PIT, GLO, MONO, POLY**
-- **Chain:** Mit der rechten Taste in der oberen Reihe spielt MEMETEK nach jedem Takt das nächste nicht-leere Pattern
+- **Chain:** Mit der rechten Taste in der oberen Reihe spielt g0dsgift nach jedem Takt das nächste nicht-leere Pattern
 - **EDIT** kopiert das aktuelle Pattern ins nächste (P1 → P2 …) und wechselt dorthin. So baust du schnell Variationen
 - **ARP** würfelt ein Pattern für die aktuelle Spur: Kick auf den Vierteln, offene Hats auf den Offbeats, ein rollender Bass
   zwischen den Kicks, Memes aus der aktuellen Bank
@@ -162,7 +164,7 @@ Note), MEME (der gespielte Sound).
 ## 8. Speichern
 
 **SAVE** (nur im Stopp) speichert alle 4 Pattern, alle Parameter, den Mixer und die Chain im Flash des FM-1. Beim nächsten
-Start von MEMETEK ist alles wieder da. Beim Speichern setzt der Ton kurz aus, das ist normal.
+Start von g0dsgift ist alles wieder da. Beim Speichern setzt der Ton kurz aus, das ist normal.
 
 ## 9. Die Spuren und ihre Parameter
 
@@ -174,19 +176,40 @@ springt direkt zur LFO-Seite.
 - **HI-HATS:** 5 Typen (METAL, NOISE, 8-BIT, SHAKER, RIDE). ROLL legt fest, wie viele Schläge ein Roll-Step hat. HUMANIZE
   variiert die Lautstärke, CHANCE die Wahrscheinlichkeit jedes Schlags. ACCENT betont die Offbeats, STEREO verteilt die Hats im
   Panorama, CHOKE lässt geschlossene Hats offene abwürgen
-- **8BIT BASS:** Oszillator mit Sub und resonantem Tiefpass. F-ENV ist die Filter-Hüllkurve, DECAY die Tonlänge in Steps.
-  **ROOT ist die Tonart für Bass, Arp und Würfel-Melodien.** DUCK duckt den Bass bei jeder Kick (Pumpen). Seiten 4 und 5 sind
-  zwei LFOs
+- **8BIT BASS:** Oszillator (siehe [Synthese](#synthese)) mit Sub und resonantem Filter (LOWPASS, BANDPASS, HIGHPASS auf
+  Seite 4). F-ENV ist die Filter-Hüllkurve, DECAY die Tonlänge in Steps. **ROOT ist die Tonart für Bass, Arp und
+  Würfel-Melodien.** DUCK duckt den Bass bei jeder Kick (Pumpen). Seiten 5 und 6 sind zwei LFOs
 - **CHIP ARP:** Gameboy-Arpeggio pro Step. RATE ist die Zahl der Noten pro Step, RICHTG die Richtung, AKKORD Moll, Dur, Sus
-  oder Power. Seite 3 ist der LFO
+  oder Power. Seite 3 ist der LFO, Seite 4 die Synthese
 - **8BIT LEAD:** monophone Melodiestimme mit Square, Pulse, Triangle, Saw und einem NOISE-Kanal wie bei alten Konsolen. Dazu
-  LAENGE in Steps, GLIDE, SWEEP (Tonhöhe gleitet beim Anschlag), DETUNE, Hüllkurve und Chip-Arpeggio. Seite 4 ist der LFO
+  LAENGE in Steps, GLIDE, SWEEP (Tonhöhe gleitet beim Anschlag), DETUNE, Hüllkurve und Chip-Arpeggio. Seite 4 ist der LFO,
+  Seite 5 die Synthese. Dazu gibt es alle Synthese-Arten des Basses
 - **MEME FX:** PITCH transponiert alle Memes, LAENGE verkürzt und beschleunigt sie. MODE STUTTER spielt vier kurze Schläge
   pro halbem Step. RND-PITCH verstimmt jeden Schlag zufällig. ECHO, E-ZEIT und FEEDBK steuern das Echo
 
+### Synthese
+
+Bass, Arp und Lead haben denselben Oszillator. **WAVE** wählt die Synthese-Art, **TIMBRE** formt sie:
+
+| WAVE | Klang | TIMBRE regelt |
+|---|---|---|
+| SQUARE, PULSE, SAW, TRI | die klassischen 8-Bit-Wellen, bewusst ungefiltert und rau | (nichts) |
+| **SUPERSAW** | sieben gegeneinander verstimmte Sägezähne: breit, fett, Trance und Hardstyle | die Verstimmung |
+| **FM** | Zwei-Operator-FM, der Modulator eine Oktave höher: Glocken, Growl, metallisch | den Modulationsindex |
+| **PWM** | Rechteck mit wandernder Pulsbreite: schwebend, chorusartig | die Tiefe der Bewegung |
+| **SYNC** | Hard-Sync-Sägezahn: schneidend, Sweeps klingen nach Laser | die Tonhöhe des Slaves |
+| **FOLD** | Sinus durch einen Wavefolder: von rund bis kreischend | den Drive |
+| PULSE12, NOISE (nur Lead) | dünner Puls, Noise-Kanal alter Konsolen | (nichts) |
+
+- **T-ENV:** Hüllkurve auf TIMBRE pro Ton. Positiv startet hell und wird dunkler, negativ umgekehrt. Damit „wow“t ein FM-Bass
+  oder ein Supersaw öffnet sich
+- **WIDTH:** Stereobreite des Supersaw
+- **FILTER** (nur Bass): Filtertyp LOWPASS, BANDPASS oder HIGHPASS
+- Die LFOs können **TIMBRE** als Ziel haben: Supersaw-Schweben, FM-Wobble, Fold-Bewegung
+
 ### LFOs
 
-Bass (2×), Arp und Lead haben LFOs mit **ZIEL** (was moduliert wird), **RATE** (im Takt: 4 Takte bis 1/32), **DEPTH**
+Bass (2×), Arp und Lead haben LFOs mit **ZIEL** (was moduliert wird, auch TIMBRE), **RATE** (im Takt: 4 Takte bis 1/32), **DEPTH**
 (Tiefe in beide Richtungen, negativ = umgekehrt) und **FORM** (Sinus, Dreieck, Sägezahn, Rechteck, S&H = Zufall pro Periode).
 Die LFOs laufen synchron zum Takt und starten mit PLAY neu.
 
@@ -231,22 +254,26 @@ Die LFOs laufen synchron zum Takt und starten mit PLAY neu.
 | 1 | K2 | RESO | 0,5 … 20 | 6 |
 | 1 | K3 | F-ENV | 0 % … 100 % | 80 % |
 | 1 | K4 | DECAY | x0,2 … x1,5 | x0,9 |
-| 2 | K1 | WAVE | SQUARE · PULSE · SAW · TRI | SQUARE |
-| 2 | K2 | SUB | 0 % … 100 % | 50 % |
-| 2 | K3 | GLIDE | 0 ms … 200 ms | 0 ms |
+| 2 | K1 | WAVE | SQUARE · PULSE · SAW · TRI · SUPERSAW · FM · PWM · SYNC · FOLD | SQUARE |
+| 2 | K2 | TIMBRE | 0 % … 100 % | 50 % |
+| 2 | K3 | SUB | 0 % … 100 % | 50 % |
 | 2 | K4 | VOL | 0 % … 100 % | 50 % |
 | 3 | K1 | ROOT | A · A# · B · C · C# · D · D# · E · F · F# · G · G# | D |
 | 3 | K2 | OCT | -1 … +1 | 0 |
 | 3 | K3 | DUCK | 0 % … 100 % | 0 % |
 | 3 | K4 | DRIVE | 0 % … 100 % | 0 % |
-| 4 | K1 | LFO1 ZIEL | CUTOFF · RESO · PITCH · F-ENV · DECAY · SUB · VOL | CUTOFF |
-| 4 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/4 |
-| 4 | K3 | DEPTH | -100 % … +100 % | 0 % |
-| 4 | K4 | FORM | SINE · TRI · SAW · SQUARE · S&H | SINE |
-| 5 | K1 | LFO2 ZIEL | CUTOFF · RESO · PITCH · F-ENV · DECAY · SUB · VOL | PITCH |
-| 5 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/16 |
+| 4 | K1 | GLIDE | 0 ms … 200 ms | 0 ms |
+| 4 | K2 | T-ENV | -100 % … +100 % | 0 % |
+| 4 | K3 | WIDTH | 0 % … 100 % | 50 % |
+| 4 | K4 | FILTER | LOWPASS · BANDPASS · HIGHPASS | LOWPASS |
+| 5 | K1 | LFO1 ZIEL | CUTOFF · RESO · PITCH · F-ENV · DECAY · SUB · VOL · TIMBRE | CUTOFF |
+| 5 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/4 |
 | 5 | K3 | DEPTH | -100 % … +100 % | 0 % |
 | 5 | K4 | FORM | SINE · TRI · SAW · SQUARE · S&H | SINE |
+| 6 | K1 | LFO2 ZIEL | CUTOFF · RESO · PITCH · F-ENV · DECAY · SUB · VOL · TIMBRE | PITCH |
+| 6 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/16 |
+| 6 | K3 | DEPTH | -100 % … +100 % | 0 % |
+| 6 | K4 | FORM | SINE · TRI · SAW · SQUARE · S&H | SINE |
 
 #### CHIP ARP
 
@@ -254,22 +281,25 @@ Die LFOs laufen synchron zum Takt und starten mit PLAY neu.
 |---|---|---|---|---|
 | 1 | K1 | RATE | 2/STP · 3/STP · 4/STP · 6/STP | 4/STP |
 | 1 | K2 | RICHTG | UP · DOWN · PING · RND | UP |
-| 1 | K3 | WAVE | SQUARE · PULSE · SAW · TRI | SQUARE |
+| 1 | K3 | WAVE | SQUARE · PULSE · SAW · TRI · SUPERSAW · FM · PWM · SYNC · FOLD | SQUARE |
 | 1 | K4 | VOL | 0 % … 60 % | 22 % |
 | 2 | K1 | OCT | -1 … +2 | 0 |
 | 2 | K2 | DECAY | 20 % … 100 % | 98 % |
 | 2 | K3 | VIBRATO | 0 % … 100 % | 0 % |
 | 2 | K4 | AKKORD | MOLL · DUR · SUS · POWER | MOLL |
-| 3 | K1 | LFO ZIEL | PITCH · VOL · TONE · PAN · DECAY · OKTAVE | PITCH |
+| 3 | K1 | LFO ZIEL | PITCH · VOL · TONE · PAN · DECAY · OKTAVE · TIMBRE | PITCH |
 | 3 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/8 |
 | 3 | K3 | DEPTH | -100 % … +100 % | 0 % |
 | 3 | K4 | FORM | SINE · TRI · SAW · SQUARE · S&H | SINE |
+| 4 | K1 | TIMBRE | 0 % … 100 % | 50 % |
+| 4 | K2 | T-ENV | -100 % … +100 % | 0 % |
+| 4 | K3 | WIDTH | 0 % … 100 % | 50 % |
 
 #### 8BIT LEAD
 
 | Seite | Knob | Parameter | Bereich / Werte | Start |
 |---|---|---|---|---|
-| 1 | K1 | WAVE | SQUARE · PULSE25 · PULSE12 · TRI · SAW · NOISE | SQUARE |
+| 1 | K1 | WAVE | SQUARE · PULSE25 · PULSE12 · TRI · SAW · NOISE · SUPERSAW · FM · PWM · SYNC · FOLD | SQUARE |
 | 1 | K2 | LAENGE | x0,25 … x4 | x1 |
 | 1 | K3 | VIBRATO | 0 % … 100 % | 0 % |
 | 1 | K4 | VOL | 0 % … 100 % | 35 % |
@@ -281,10 +311,13 @@ Die LFOs laufen synchron zum Takt und starten mit PLAY neu.
 | 3 | K2 | DECAY | 0,05 s … 2 s | 0,4 s |
 | 3 | K3 | SUSTAIN | 0 % … 100 % | 60 % |
 | 3 | K4 | ARP | AUS · OKTAVE · DUR · MOLL | AUS |
-| 4 | K1 | LFO ZIEL | PITCH · VOL · TONE · PAN | PITCH |
+| 4 | K1 | LFO ZIEL | PITCH · VOL · TONE · PAN · TIMBRE | PITCH |
 | 4 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/4 |
 | 4 | K3 | DEPTH | -100 % … +100 % | 0 % |
 | 4 | K4 | FORM | SINE · TRI · SAW · SQUARE · S&H | SINE |
+| 5 | K1 | TIMBRE | 0 % … 100 % | 50 % |
+| 5 | K2 | T-ENV | -100 % … +100 % | 0 % |
+| 5 | K3 | WIDTH | 0 % … 100 % | 50 % |
 
 #### MEME FX
 
@@ -346,7 +379,7 @@ für den 8-Bit-Klang) und **DRIVE** (Sättigung der Summe). Danach folgt immer e
 
 ## 11. Die 96 Meme-Sounds
 
-Sechs Bänke zu je 16 Sounds. Im PLAY-Modus der MEME-Spur wählst du die Bank mit **OP1–OP6** und spielst die Sounds auf den
+Sechs Bänke zu je 16 Sounds. Die Nummer der Kachel ist die untere Taste (1 = ganz links). Im PLAY-Modus der MEME-Spur wählst du die Bank mit **OP1–OP6** und spielst die Sounds auf den
 16 unteren Tasten. **PRESETS** blättert durch alle 96. Das Kürzel erscheint im Step-Raster.
 
 <!-- GEN:MEMES -->
@@ -382,6 +415,8 @@ Sechs Bänke zu je 16 Sounds. Im PLAY-Modus der MEME-Spur wählst du die Bank mi
   BASS-Spur ergibt genau das). Offene Hats auf 3, 7, 11, 15. BPM 160–175, im Mixer etwas DUCK auf der Bass-Seite 3
 - **Memecore-Drop:** P1 mit **EDIT** nach P2 kopieren, in P2 Memes dazu (Bank C oder F), Chain an
 - **Wobble-Bass:** Bass-LFO1 auf CUTOFF, RATE 1/8, DEPTH 60 %, RESO hoch
+- **Hardstyle-Supersaw:** Bass WAVE SUPERSAW, TIMBRE 60 %, WIDTH 80 %, OCT +1, DRIVE 40 %
+- **FM-Growl:** Bass WAVE FM, T-ENV +70 %, LFO2 auf TIMBRE mit 1/16 und S&H
 - **8-Bit-Melodie:** LEAD-Spur, WAVE PULSE25, ARP DUR, im Stopp mit REC Note für Note eingeben, GLOBAL CRUSH 60 %
 - **Chaos-Break:** MEME MODE STUTTER, RND-PITCH 7, ECHO 40 %, Live-Tonhöhe mit der oberen Reihe umschalten
 
@@ -394,7 +429,7 @@ Sechs Bänke zu je 16 Sounds. Im PLAY-Modus der MEME-Spur wählst du die Bank mi
 | Tasten spielen nicht | Im PLAY-Modus spielen sie die gewählte Spur, im STEP-Modus setzen sie Steps |
 | Speichern geht nicht | SAVE funktioniert nur im Stopp |
 | Knackser, Aussetzer | Weniger lange Memes gleichzeitig, Echo-Feedback senken. Bitte melden (siehe unten) |
-| MEMETEK startet nicht mehr | fm1-dock überspringt ein Modul nach zwei Abstürzen. HOME halten und es erneut wählen, oder neu auf die Konsole ziehen |
+| g0dsgift startet nicht mehr | fm1-dock überspringt ein Modul nach zwei Abstürzen. HOME halten und es erneut wählen, oder neu auf die Konsole ziehen |
 
 Fehler und Wünsche bitte als [Issue auf GitHub](https://github.com/g0rst/memetek-fm1/issues) melden.
 
@@ -402,13 +437,14 @@ Fehler und Wünsche bitte als [Issue auf GitHub](https://github.com/g0rst/memete
 
 | Version | Neu |
 |---|---|
+| 0.4 | neuer Name **g0dsgift** (Genre: 8-Bit-Memetek); Synthese für Bass, Arp, Lead: SUPERSAW, FM, PWM, SYNC, FOLD mit TIMBRE, T-ENV, WIDTH; Bass-Filtertypen; LFO-Ziel TIMBRE; englisches Handbuch |
 | 0.3 | Handbuch; Arp-Steps zeigen I / IV / V |
 | 0.2 | alle 96 Meme-Sounds in 6 Bänken; Bankwahl und Live-Tonhöhe auf der oberen Reihe; Tap-Tempo (SEL); Pattern kopieren (EDIT); HOME kurz; Spur verschieben (OCT im STEP-Modus) |
 | 0.1 | erste Firmware: 6 Spuren, Sequencer, 4 Pattern, Chain, LFOs, Mixer, Echo, Crusher, 16 Memes |
 
 ## 16. Lizenz und Dank
 
-MEMETEK ist freie Software unter der GPL-3.0. Es baut auf [fm1-dock](https://github.com/joakimeriksson/fm1-dock) von Joakim
+g0dsgift ist freie Software unter der GPL-3.0. Es baut auf [fm1-dock](https://github.com/joakimeriksson/fm1-dock) von Joakim
 Eriksson auf, das wiederum auf Dinghy und Felucca (Leo Kuroshita, Hügelton Instruments) und SLOOP (isod89) basiert. Getestet wird
 mit [fm1-emu](https://github.com/joakimeriksson/fm1-emu). Gebaut wird auf GitHub mit
 [zvenson/fm1-build](https://github.com/zvenson/fm1-build).

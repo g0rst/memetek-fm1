@@ -30,7 +30,7 @@ jobs:
       attestations: write
     with:
       build: ./build.sh ${{ github.ref_type == 'tag' && format('--release {0}', github.ref_name) || '' }}
-      packages: build/memetek*
+      packages: build/g0dsgift*
   release:
     # a push to main publishes its packages as the release vX.Y of the VERSION file (updated in place until VERSION changes)
     needs: build
@@ -50,17 +50,17 @@ jobs:
         with:
           tag_name: v${{ steps.v.outputs.v }}
           target_commitish: ${{ github.sha }}
-          name: MEMETEK v${{ steps.v.outputs.v }}
+          name: g0dsgift v${{ steps.v.outputs.v }}
           prerelease: true
           overwrite_files: true
           files: |
-            dist/build/memetek*
+            dist/build/g0dsgift*
             dist/SHA256SUMS
           body: |
-            MEMETEK v${{ steps.v.outputs.v }} (build ${{ github.sha }}). Noch nicht auf echter Hardware getestet: Installieren auf eigene Gefahr.
+            g0dsgift v${{ steps.v.outputs.v }}, die Groovebox für 8-Bit-Memetek (build ${{ github.sha }}). Noch nicht auf echter Hardware getestet: Installieren auf eigene Gefahr.
 
-            **memetek.dock**: das Modul für fm1-dock. fm1-dock einmal installieren (https://joakimeriksson.github.io/fm1-dock/#install), dann die Datei auf die Konsole ziehen (https://joakimeriksson.github.io/fm1-dock/#console). Am FM-1 HOME halten und MEMETEK wählen.
-            **memetek.fwsc**: dieselbe Firmware eigenständig (fm1-dock mit MEMETEK allein, Identität FM-1_964).
+            **g0dsgift.dock**: das Modul für fm1-dock. fm1-dock einmal installieren (https://joakimeriksson.github.io/fm1-dock/#install), dann die Datei auf die Konsole ziehen (https://joakimeriksson.github.io/fm1-dock/#console). Am FM-1 HOME halten und G0DSGIFT wählen.
+            **g0dsgift.fwsc**: dieselbe Firmware eigenständig (fm1-dock mit G0DSGIFT allein, Identität FM-1_964).
             Zurück: FM-1 Firmware Hub (https://fm1.designburgapps.com) oder M-VAVEs Updater.
   pages:
     # the site: the packages, the browser prototype and a link that opens the firmware in fm1-emu
@@ -83,10 +83,10 @@ jobs:
       - run: |
           mkdir -p _site
           python3 -m pip install markdown
-          python3 tools/handbuch.py --html _site/handbuch.html
+          python3 tools/handbuch.py --html _site
           cp site/index.html _site/
           cp web/index.html _site/prototype.html
-          cp dist/build/memetek* dist/SHA256SUMS _site/
+          cp dist/build/g0dsgift* dist/SHA256SUMS _site/
       - uses: actions/upload-pages-artifact@v3
       - id: deploy
         uses: actions/deploy-pages@v4

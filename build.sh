@@ -1,8 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Build MEMETEK on fm1-dock (https://github.com/joakimeriksson/fm1-dock):
-#   build/memetek.dock    the module: drop it on fm1-dock's console page, or tools/dock.py deploy
-#   build/memetek.fwsc    a solo firmware: fm1-dock with MEMETEK alone, installable like any FM-1 firmware
+# Build G0DSGIFT on fm1-dock (https://github.com/joakimeriksson/fm1-dock):
+#   build/g0dsgift.dock    the module: drop it on fm1-dock's console page, or tools/dock.py deploy
+#   build/g0dsgift.fwsc    a solo firmware: fm1-dock with G0DSGIFT alone, installable like any FM-1 firmware
 #
 #   ./build.sh [--release X.Y]      needs the JieLi toolchain ($JIELI_TOOLCHAIN) and the AC79 SDK ($AC79_SDK),
 #                                   as zvenson/fm1-build installs them on GitHub
@@ -29,18 +29,18 @@ fi
 [ "$FETCH_ONLY" = 1 ] && exit 0
 
 # the module, inside fm1-dock's tree (its tools find modules/<name>)
-rm -rf build/fm1-dock/modules/memetek
-cp -r modules/memetek build/fm1-dock/modules/memetek
+rm -rf build/fm1-dock/modules/g0dsgift
+cp -r modules/g0dsgift build/fm1-dock/modules/g0dsgift
 cd build/fm1-dock
-python3 tools/hbmod.py modules/memetek
-cp build/modules/memetek.dock ../memetek.dock
+python3 tools/hbmod.py modules/g0dsgift
+cp build/modules/g0dsgift.dock ../g0dsgift.dock
 # the solo firmware
 if [ -n "$REL" ]; then
-    python3 tools/build.py --modules modules/memetek --name memetek --app-name "MEMETEK" --identity "$IDENTITY" --release "$REL"
-    cp "build/memetek-$REL.fwsc" ../ 2>/dev/null || cp build/memetek*.fwsc ../
+    python3 tools/build.py --modules modules/g0dsgift --name g0dsgift --app-name "G0DSGIFT" --identity "$IDENTITY" --release "$REL"
+    cp "build/g0dsgift-$REL.fwsc" ../ 2>/dev/null || cp build/g0dsgift*.fwsc ../
 else
-    python3 tools/build.py --modules modules/memetek --name memetek --app-name "MEMETEK" --identity "$IDENTITY"
-    cp build/memetek*.fwsc ../
+    python3 tools/build.py --modules modules/g0dsgift --name g0dsgift --app-name "G0DSGIFT" --identity "$IDENTITY"
+    cp build/g0dsgift*.fwsc ../
 fi
 cd ../..
 ls -l build/*.dock build/*.fwsc
