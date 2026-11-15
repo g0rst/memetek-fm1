@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* G0DSGIFT on a computer: the module (modules/g0dsgift/g0dsgift.c) runs unchanged against a fake fm1-dock
- * host. Out come build/host/g0dsgift.wav (what the FM-1 would play), screens as PPM, and a check:
+/* Memetek FM1 on a computer: the module (modules/memetek/memetek.c) runs unchanged against a fake fm1-dock
+ * host. Out come build/host/memetek.wav (what the FM-1 would play), screens as PPM, and a check:
  * no NaN, no silence where there should be sound, no clipping storm, every page and track touched.
  *   tests/run_host.sh   (needs fm1-dock's firmware/ for hb_module.h and the font: $FM1_DOCK) */
 #include <math.h>
@@ -79,7 +79,7 @@ static hb_host_t host = {
     h_midi_send, h_master, h_blit, h_text_w, h_bank_load, h_bank_save, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-#include "../modules/g0dsgift/g0dsgift.c"
+#include "../modules/memetek/memetek.c"
 
 /* ---- the run */
 static FILE *wav;
@@ -142,6 +142,7 @@ static void shot(const char *path)
     fclose(f);
     printf("screen -> %s\n", path);
 }
+static void patkey(int p) { for (int k = 0; k < 27; k++) if (KEY_BLACK[k] == 6 + p) { key((uint32_t)k, 1); key((uint32_t)k, 0); } }
 static double window(uint32_t ms) { win_peak = 0; run_ms(ms); return win_peak; }
 static int fails;
 static void expect(int ok, const char *what) { printf("%s %s\n", ok ? "ok  " : "FAIL", what); if (!ok) fails++; }
@@ -150,11 +151,11 @@ int main(int argc, char **argv)
 {
     const char *dir = argc > 1 ? argv[1] : "build/host";
     char p[512];
-    snprintf(p, sizeof p, "%s/g0dsgift.wav", dir);
+    snprintf(p, sizeof p, "%s/memetek.wav", dir);
     wav_begin(p);
     expect(M->abi == HB_ABI && M->init(&host) == 0, "init");
     M->draw(1);
-    snprintf(p, sizeof p, "%s/g0dsgift-0-start.ppm", dir); shot(p);
+    snprintf(p, sizeof p, "%s/memetek-0-start.ppm", dir); shot(p);
     expect(window(300) < 0.01, "silent before PLAY");
 
     /* pattern 1: tek */
@@ -162,18 +163,41 @@ int main(int argc, char **argv)
     double pk = window(4000);
     printf("     P1 peak %.3f\n", pk);
     expect(pk > 0.2, "P1 (tek) sounds");
-    snprintf(p, sizeof p, "%s/g0dsgift-1-playing.ppm", dir); shot(p);
+    snprintf(p, sizeof p, "%s/memetek-1-playing.ppm", dir); shot(p);
 
     /* pattern 2: memecore (black key 8 = pattern 2 in STEP mode) */
-    key(15, 1); key(15, 0);
+    /* a pattern key: the first press only shows and edits it, P1 goes on playing */
+    patkey(1);
+    run_ms(3000);
+    expect(pat_edit == 1 && pat_next == 0 && pat_play == 0, "first press of P2: P2 shown, P1 still plays");
+    uint8_t before = LIVE[1].s[T_BASS][1];
+    M->ui(HB_EV_BTN_DOWN | HB_BTN_SEL, 0); btn(HB_BTN_ARP); M->ui(HB_EV_BTN_UP | HB_BTN_SEL, 0);   /* clear P2's bass */
+    expect(PAT[1].s[T_BASS][1] == 0 && LIVE[1].s[T_BASS][1] == before && pending[1], "edits of P2 wait: not heard, P2 marked *");
+    btn(HB_BTN_ARP);                                     /* dice it back to something */
+    patkey(1);                                           /* the second press activates */
+    expect(pat_next == 1 && !pending[1] && memcmp(&LIVE[1], &PAT[1], sizeof(pat_t)) == 0, "second press of P2: activated");
+    run_ms(3500);
+    expect(pat_play == 1, "P2 plays from the next bar");
     expect(window(6000) > 0.2, "P2 (memecore) sounds");
-    snprintf(p, sizeof p, "%s/g0dsgift-2-memecore.ppm", dir); shot(p);
+    /* edits of the active pattern are heard at once */
+    key(STEP_KEY[5], 1); key(STEP_KEY[5], 0);
+    expect(LIVE[1].s[track][5] == PAT[1].s[track][5], "edits of the playing pattern are heard at once");
+    snprintf(p, sizeof p, "%s/memetek-2-memecore.ppm", dir); shot(p);
     /* pattern 3: chiptune with the lead */
-    key(17, 1); key(17, 0);
+    patkey(2); patkey(2);
     enc(HB_ENC_SELECT, 2);                               /* BASS -> LEAD */
     expect(track == T_LEAD, "SELECT moves by its clicks");
+    run_ms(3500);
     expect(window(6000) > 0.2, "P3 (chiptune) sounds");
-    snprintf(p, sizeof p, "%s/g0dsgift-3-lead.ppm", dir); shot(p);
+    /* in a chain, an edited pattern plays its old version until it is activated */
+    for (int k = 0; k < 27; k++) if (KEY_BLACK[k] == 10) { key((uint32_t)k, 1); key((uint32_t)k, 0); }
+    expect(chain_on, "chain on");
+    patkey(2); key(STEP_KEY[0], 1); key(STEP_KEY[0], 0);
+    expect(pending[2] && memcmp(&LIVE[2], &PAT[2], sizeof(pat_t)) != 0, "chain: the edit of P3 waits");
+    patkey(2);
+    expect(!pending[2] && memcmp(&LIVE[2], &PAT[2], sizeof(pat_t)) == 0, "chain: P3 activated, the edit plays");
+    for (int k = 0; k < 27; k++) if (KEY_BLACK[k] == 10) { key((uint32_t)k, 1); key((uint32_t)k, 0); }
+    snprintf(p, sizeof p, "%s/memetek-3-lead.ppm", dir); shot(p);
 
     /* mute everything but the kick, then solo the bass */
     for (int k = 3; k <= 13; k++) if (KEY_BLACK[k] >= 1 && KEY_BLACK[k] <= 5) { key((uint32_t)k, 1); key((uint32_t)k, 0); }
@@ -185,14 +209,14 @@ int main(int argc, char **argv)
 
     /* the mixer and the global page */
     btn(HB_BTN_FX);
-    snprintf(p, sizeof p, "%s/g0dsgift-4-mixer.ppm", dir); shot(p);
+    snprintf(p, sizeof p, "%s/memetek-4-mixer.ppm", dir); shot(p);
     btn(HB_BTN_GLO);
     enc(HB_ENC_KNOB1, -40);                              /* slower */
     enc(HB_ENC_KNOB3, 30);                               /* more crush */
     run_ms(3000);
     enc(HB_ENC_KNOB3, -10);                              /* back to 45 % */
     enc(HB_ENC_KNOB1, 40);
-    snprintf(p, sizeof p, "%s/g0dsgift-5-global.ppm", dir); shot(p);
+    snprintf(p, sizeof p, "%s/memetek-5-global.ppm", dir); shot(p);
 
     /* every meme, live, in PLAY mode */
     btn(HB_BTN_PLAY);
@@ -243,7 +267,7 @@ int main(int argc, char **argv)
     expect(PAT[pat_edit].s[track][1] == first && PAT[pat_edit].s[track][0] == last, "OCT+ in STEP mode shifts the track");
     btn(HB_BTN_OCT_DOWN);
     btn(HB_BTN_SEQ);
-    snprintf(p, sizeof p, "%s/g0dsgift-6-memes.ppm", dir); shot(p);
+    snprintf(p, sizeof p, "%s/memetek-6-memes.ppm", dir); shot(p);
     /* the lead, live and recorded */
     enc(HB_ENC_SELECT, -1);
     btn(HB_BTN_REC);
@@ -291,7 +315,7 @@ int main(int argc, char **argv)
     expect(M->init(&host) == 0, "init again (from the saved bank)");
     (void)keep;
     M->draw(1);
-    snprintf(p, sizeof p, "%s/g0dsgift-7-reloaded.ppm", dir); shot(p);
+    snprintf(p, sizeof p, "%s/memetek-7-reloaded.ppm", dir); shot(p);
     wav_end();
     printf("%s\n", fails ? "FAILED" : "ALL OK");
     return fails ? 1 : 0;

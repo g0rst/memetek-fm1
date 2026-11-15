@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* g0dsgift's 96 meme sounds, six banks of 16, synthesised live: each sound is up to four layers, each layer an
+/* Memetek FM1's 96 meme sounds, six banks of 16, synthesised live: each sound is up to four layers, each layer an
  * oscillator (or noise) with a pitch path or a note sequence, envelopes, vibrato, amplitude modulation, a
  * filter with its own path and LFO, repeats. Made after the browser prototype's Web Audio patches. */
 

@@ -1,20 +1,20 @@
-# g0dsgift – Manual
+# Memetek FM1 – Manual
 
 <!-- GEN:VERSION -->
-**Version 0.4**
+**Version 0.5**
 <!-- /GEN:VERSION -->
  · the groovebox for **8-bit memetek** on the M-VAVE FM-1 · [Deutsches Handbuch](handbuch.html) · [Site with emulator](https://g0rst.github.io/memetek-fm1/) · [Source](https://github.com/g0rst/memetek-fm1)
 
 > This manual belongs to the firmware and is updated with every new version. The parameter and sound tables are generated
 > straight from the firmware's source.
-> g0dsgift is young and has so far only been tested in the FM-1 emulator. Installing it on real hardware is at your own risk.
+> Memetek FM1 is young and has so far only been tested in the FM-1 emulator. Installing it on real hardware is at your own risk.
 
 [TOC]
 
-## 1. What is g0dsgift?
+## 1. What is Memetek FM1?
 
 **8-bit memetek** is the genre: tek kicks and rolling bass, the 8-bit sound of old game consoles and meme sounds, loud,
-fast and silly. **g0dsgift** is the instrument for it. It turns the FM-1 into a groovebox for exactly this music:
+fast and silly. **memetek-fm1** is the instrument for it. It turns the FM-1 into a groovebox for exactly this music:
 
 - **6 tracks:** TEK-KICK, HI-HATS, 8BIT BASS, CHIP ARP, 8BIT LEAD, MEME FX
 - **16-step sequencer** with 4 patterns, chain, copy, shift, dice and live recording
@@ -27,7 +27,7 @@ fast and silly. **g0dsgift** is the instrument for it. It turns the FM-1 into a 
 
 ### Try it without a device
 
-On the [g0dsgift site](https://g0rst.github.io/memetek-fm1/), tap **"Im FM-1-Emulator testen"** (try in the FM-1 emulator).
+On the [Memetek FM1 site](https://g0rst.github.io/memetek-fm1/), tap **"Im FM-1-Emulator testen"** (try in the FM-1 emulator).
 The very same firmware runs there in an emulated FM-1. On old computers the emulator may be too slow; a current phone runs
 it well.
 
@@ -37,14 +37,14 @@ You need Chrome or Edge on a computer and a USB data cable.
 
 1. **Install fm1-dock** (once): on the [fm1-dock page](https://joakimeriksson.github.io/fm1-dock/#install) choose "Connect over
    USB", then "Install fm1-dock".
-2. **Load g0dsgift:** download `g0dsgift.dock` from the [latest release](https://github.com/g0rst/memetek-fm1/releases) and drop it on
+2. **Load Memetek FM1:** download `memetek-fm1.dock` from the [latest release](https://github.com/g0rst/memetek-fm1/releases) and drop it on
    the [fm1-dock console](https://joakimeriksson.github.io/fm1-dock/#console).
-3. On the FM-1, hold **HOME** for about 1.5 seconds and pick **G0DSGIFT**.
+3. On the FM-1, hold **HOME** for about 1.5 seconds and pick **MEMETEK FM1**.
 
-`g0dsgift.fwsc` is the same firmware as a standalone package (fm1-dock with g0dsgift alone).
+`memetek-fm1.fwsc` is the same firmware as a standalone package (fm1-dock with Memetek FM1 alone).
 
-**Updates:** drop the new `g0dsgift.dock` on the console again. Before v0.4 the instrument was called MEMETEK: delete the old
-module in the fm1-dock console.
+**Updates:** drop the new `memetek-fm1.dock` on the console again. If your module is still called G0DSGIFT or MEMETEK, delete the old one in the fm1-dock
+console.
 
 **Back to the stock firmware:** with the [FM-1 Firmware Hub](https://fm1.designburgapps.com) or M-VAVE's own updater. A module
 that crashes twice in a row is skipped by fm1-dock at start-up.
@@ -87,7 +87,8 @@ that crashes twice in a row is skipped by fm1-dock at start-up.
 
 ## 4. The display
 
-- **Header:** g0dsgift, the pattern being edited (P1–P4), CHAIN when on, on the right `>` (running) or `||` (stopped) with the tempo
+- **Header:** on the left MEMETEK FM1 and the pattern being **edited** (`P2*` = edits not yet activated), on the right the
+  **playing** pattern with `>` (running) or `||` (stopped), `C` for chain, and the tempo, e.g. `>P1 160`
 - **Title:** the track in its colour (or MIXER / GLOBAL), on the right the page, e.g. `S2/5`
 - **Step grid:** 16 cells in two rows. Coloured: a step that is set; white: the step playing. The label in a cell shows its
   value (see below). On LEAD a bar marks the recording cursor
@@ -118,7 +119,7 @@ that crashes twice in a row is skipped by fm1-dock at start-up.
 |---|---|
 | **OP1–OP6** | mute KICK, HATS, BASS, ARP, LEAD, MEME |
 | **SEL + OP1–OP6** | solo (several at once). With a solo, only the solo tracks play |
-| **PIT, GLO, MONO, POLY** | pattern 1–4. While running, the change comes at the end of the bar |
+| **PIT, GLO, MONO, POLY** | pattern 1–4. **First press:** show and edit that pattern, the current one keeps playing. **Second press:** activate it, it plays from the end of the bar (see [Patterns](#6-patterns-chain-copy-dice)) |
 | **the key on the right** | chain on/off |
 
 - **OCT− / OCT+** shift the track one step left or right.
@@ -139,9 +140,16 @@ The memes' live pitch applies to the memes in the running pattern too: whole bre
 
 ## 6. Patterns, chain, copy, dice
 
-- **4 patterns** (P1–P4), each with all 6 tracks. Pick them in STEP mode with **PIT, GLO, MONO, POLY**
-- **Chain:** with the key on the right of the upper row, g0dsgift plays the next pattern that isn't empty after each bar
-- **EDIT** copies the current pattern into the next one (P1 → P2 …) and goes there: variations in seconds
+- **4 patterns** (P1–P4), each with all 6 tracks. In STEP mode with **PIT, GLO, MONO, POLY**:
+  - **First press** of a pattern key: the display jumps to that pattern and every edit goes there only. The pattern that was
+    playing keeps playing unchanged, so your edits aren't heard yet. The header shows `P2*` while there are edits not yet
+    activated; the edited pattern's LED blinks
+  - **Second press** of the same key: the pattern is **activated**. The edits are taken over and it plays from the end of the
+    bar. The playing pattern's LED is lit
+  - Editing the pattern that is active, you hear every change at once
+- **Chain:** with the key on the right of the upper row, Memetek FM1 plays the next pattern that isn't empty after each bar.
+  In a chain, an edited pattern keeps playing its old version until you activate it with its key (one press while it is shown)
+- **EDIT** copies the current pattern into the next one (P1 → P2 …) and shows it. One press of its key activates it
 - **ARP** rolls the dice for the current track: kicks on the quarters, open hats on the offbeats, a rolling bass between the
   kicks, memes from the current bank
 - **SEL + ARP** clears the current track
@@ -164,7 +172,7 @@ What is recorded: KICK (upper row = accent), HATS (upper row = open), BASS and A
 ## 8. Saving
 
 **SAVE** (only when stopped) keeps all 4 patterns, every parameter, the mixer and the chain in the FM-1's flash. The next
-time g0dsgift starts, it is all back. The sound drops out briefly while saving; that is normal.
+time Memetek FM1 starts, it is all back. The sound drops out briefly while saving; that is normal.
 
 ## 9. The tracks and their parameters
 
@@ -429,7 +437,7 @@ with **OP1–OP6** and play the sounds on the 16 lower keys. **PRESETS** goes th
 | The keys don't play | in PLAY mode they play the selected track, in STEP mode they set steps |
 | Saving doesn't work | SAVE works only when stopped |
 | Clicks, dropouts | fewer long memes at once, less echo feedback. Please report it (below) |
-| g0dsgift doesn't start any more | fm1-dock skips a module after two crashes. Hold HOME and pick it again, or drop it on the console again |
+| Memetek FM1 doesn't start any more | fm1-dock skips a module after two crashes. Hold HOME and pick it again, or drop it on the console again |
 
 Please report bugs and wishes as a [GitHub issue](https://github.com/g0rst/memetek-fm1/issues).
 
@@ -437,13 +445,16 @@ Please report bugs and wishes as a [GitHub issue](https://github.com/g0rst/memet
 
 | Version | New |
 |---|---|
-| 0.4 | new name **g0dsgift** (genre: 8-bit memetek); synthesis for bass, arp, lead: SUPERSAW, FM, PWM, SYNC, FOLD with TIMBRE, T-ENV, WIDTH; bass filter types; LFO target TIMBRE; English manual |
+| 0.5 | the name is **Memetek FM1** again; patterns: the first press of PIT/GLO/MONO/POLY shows and edits a pattern, the second activates it (plays from the end of the bar); edits of patterns that aren't active, and in a chain, are heard only once activated; the header shows the edited and the playing pattern |
+| 0.4 | name g0dsgift (genre: 8-bit memetek); synthesis for bass, arp, lead: SUPERSAW, FM, PWM, SYNC, FOLD with TIMBRE, T-ENV, WIDTH; bass filter types; LFO target TIMBRE; English manual |
 | 0.3 | manual; arp steps show I / IV / V |
 | 0.2 | all 96 meme sounds in 6 banks; bank select and live pitch on the upper row; tap tempo (SEL); pattern copy (EDIT); HOME tapped; track shift (OCT in STEP mode) |
 | 0.1 | first firmware: 6 tracks, sequencer, 4 patterns, chain, LFOs, mixer, echo, crusher, 16 memes |
 
 ## 16. Licence and thanks
 
-g0dsgift is free software under the GPL-3.0. It builds on [fm1-dock](https://github.com/joakimeriksson/fm1-dock) by Joakim
+Memetek FM1 is free software under the GPL-3.0. **Inspired by g0dsgift777.** Free all Ⓐnarchists!
+
+It builds on [fm1-dock](https://github.com/joakimeriksson/fm1-dock) by Joakim
 Eriksson, which builds on Dinghy and Felucca (Leo Kuroshita, Hügelton Instruments) and SLOOP (isod89). It is tested with
 [fm1-emu](https://github.com/joakimeriksson/fm1-emu) and built on GitHub with [zvenson/fm1-build](https://github.com/zvenson/fm1-build).

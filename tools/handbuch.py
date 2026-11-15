@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
 """The manuals: docs/HANDBUCH.md (German) and docs/MANUAL.md (English), with their tables made from the firmware's own
-source, so they stay true, and as web pages in g0dsgift's 8-bit meme style.
+source, so they stay true, and as web pages in Memetek FM1's 8-bit meme style.
 
   tools/handbuch.py               fill the tables in both manuals (between the <!-- GEN:name --> markers)
   tools/handbuch.py --html DIR    also write DIR/handbuch.html and DIR/manual.html (needs python-markdown)
   tools/handbuch.py --check       fail when a manual is not up to date with the source
 
-The tables: every track's pages and parameters (modules/g0dsgift/g0dsgift.c, the pdef_t arrays), the 96 memes
-(modules/g0dsgift/memes.inc) and the version (VERSION)."""
+The tables: every track's pages and parameters (modules/memetek/memetek.c, the pdef_t arrays), the 96 memes
+(modules/memetek/memes.inc) and the version (VERSION)."""
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = (ROOT / "modules/g0dsgift/g0dsgift.c").read_text()
-MEMES = (ROOT / "modules/g0dsgift/memes.inc").read_text()
+SRC = (ROOT / "modules/memetek/memetek.c").read_text()
+MEMES = (ROOT / "modules/memetek/memes.inc").read_text()
 VERSION = (ROOT / "VERSION").read_text().strip()
 
 L10N = {
@@ -23,13 +23,13 @@ L10N = {
            "ph": "| Seite | Knob | Parameter | Bereich / Werte | Start |", "alias": "wie auf der Spur-Seite",
            "mix": "MIXER (Taste FX)", "glo": "GLOBAL (Taste GLO)", "keyh": "Taste (unten)", "bank": "Bank",
            "keys": ["F3", "G3", "A3", "H3", "C4", "D4", "E4", "F4", "G4", "A4", "H4", "C5", "D5", "E5", "F5", "G5"],
-           "title": "g0dsgift Handbuch", "toc": "INHALT.EXE", "meme": "wenn die kick 8-bit ist", "file": "HANDBUCH.TXT",
+           "title": "Memetek FM1 Handbuch", "toc": "INHALT.EXE", "meme": "wenn die kick 8-bit ist", "file": "HANDBUCH.TXT",
            "key": "Taste"},
     "en": {"doc": ROOT / "docs/MANUAL.md", "html": "manual.html", "dec": ".",
            "ph": "| Page | Knob | Parameter | Range / values | Default |", "alias": "as on the track page",
            "mix": "MIXER (FX button)", "glo": "GLOBAL (GLO button)", "keyh": "Key (lower row)", "bank": "Bank",
            "keys": ["F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5"],
-           "title": "g0dsgift Manual", "toc": "CONTENTS.EXE", "meme": "when the kick is 8-bit", "file": "MANUAL.TXT",
+           "title": "Memetek FM1 Manual", "toc": "CONTENTS.EXE", "meme": "when the kick is 8-bit", "file": "MANUAL.TXT",
            "key": "key"},
 }
 LANG = "de"
@@ -251,7 +251,7 @@ footer{text-align:center;font:10px 'Press Start 2P';color:#8a6aa8;margin-top:40p
 @media (max-width:600px){body{font-size:20px}h1{font-size:20px}h2{font-size:13px}.sticker{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style></head><body>
-<div class="marquee"><span>&#9733; g0dsgift v@VERSION@ &#9733; 8-BIT MEMETEK &#9733; 96 MEMES &#9733; SUPERSAW GO WEEEE &#9733; TEK KICK GO BRRR &#9733; 8-BIT OR DIE &#9733; NO CAP &#9733; STONKS &#9733; BRUH &#9733; SHEESH &#9733; YEET THE BASS &#9733;</span></div>
+<div class="marquee"><span>&#9733; MEMETEK FM1 v@VERSION@ &#9733; 8-BIT MEMETEK &#9733; 96 MEMES &#9733; SUPERSAW GO WEEEE &#9733; TEK KICK GO BRRR &#9733; 8-BIT OR DIE &#9733; NO CAP &#9733; STONKS &#9733; BRUH &#9733; SHEESH &#9733; YEET THE BASS &#9733;</span></div>
 <main>
 <nav class="lang"><a href="handbuch.html"@DE@>DE</a><a href="manual.html"@EN@>EN</a><a href="./">&#9654; EMU</a></nav>
 <span class="sticker" style="top:120px;right:-30px;background:var(--yel);transform:rotate(9deg)">NO CAP</span>
@@ -259,12 +259,12 @@ footer{text-align:center;font:10px 'Press Start 2P';color:#8a6aa8;margin-top:40p
 <span class="sticker" style="top:1500px;right:-40px;background:var(--pink);transform:rotate(6deg)">BRUH.</span>
 <span class="sticker" style="top:2600px;left:-40px;background:var(--lime);transform:rotate(-7deg)">SHEESH</span>
 <span class="sticker" style="top:3800px;right:-34px;background:var(--org);transform:rotate(11deg)">GG EZ</span>
-<div class="hero"><div class="meme">@MEME@</div><div class="logo">g0dsgift</div><div class="sub">&#9608; @FILE@ &#9608; 8-BIT MEMETEK &#9608; v@VERSION@ <span class="blink">_</span></div></div>
+<div class="hero"><div class="meme">@MEME@</div><div class="logo">MEMETEK FM1</div><div class="sub">&#9608; @FILE@ &#9608; 8-BIT MEMETEK &#9608; v@VERSION@ <span class="blink">_</span></div></div>
 <div class="pixbar"></div>
 """
 HTML_TAIL = """
 <div class="pixbar"></div>
-<footer>g0dsgift &middot; 8-BIT MEMETEK &middot; GPL-3.0 &middot; MADE WITH 100% REAL FAKE SAMPLES &middot; <span class="blink">PRESS START</span></footer>
+<footer>MEMETEK FM1 &middot; INSPIRED BY G0DSGIFT777 &middot; FREE ALL &#9398;NARCHISTS &middot; 8-BIT MEMETEK &middot; GPL-3.0 &middot; MADE WITH 100% REAL FAKE SAMPLES &middot; <span class="blink">PRESS START</span></footer>
 </main></body></html>"""
 
 

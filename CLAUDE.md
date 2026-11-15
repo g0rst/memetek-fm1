@@ -1,8 +1,8 @@
-# g0dsgift – notes for working on this repository
+# Memetek FM1 – notes for working on this repository
 
-g0dsgift is the instrument; 8-bit memetek is the genre it is made for (the repository keeps its old name memetek-fm1).
+Memetek FM1 is the instrument; 8-bit memetek is the genre it is made for. Credits: inspired by g0dsgift777 (keep this in both manuals' thanks section).
 
-- The firmware is an fm1-dock module: `modules/g0dsgift/g0dsgift.c` (+ `memes.inc`). Float DSP, single precision only
+- The firmware is an fm1-dock module: `modules/memetek/memetek.c` (+ `memes.inc`). Float DSP, single precision only
   (`-Werror=double-promotion`); `render()` runs in the audio interrupt.
 - Test before every push: `tests/run_host.sh` (the module on a fake FM-1 with sanitizers; must print ALL OK).
   For CPU load, run the built `.fwsc` in fm1-emu (`fm1-emu --fwsc ... --keys ... --wav ...`).

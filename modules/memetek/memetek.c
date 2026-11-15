@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* g0dsgift: a groovebox for 8-bit memetek on the M-VAVE FM-1, as an fm1-dock module.
+/* Memetek FM1: a groovebox for 8-bit memetek on the M-VAVE FM-1, as an fm1-dock module.
  * Six tracks (TEK-KICK, HATS, 8-BIT BASS, CHIP ARP, 8-BIT LEAD, MEME FX), a 16-step sequencer with
  * four patterns, pages of parameters on the four knobs, a mixer, an echo, a bitcrusher.
  *
@@ -15,7 +15,8 @@
  *   MEME in PLAY mode: white keys the 16 sounds of the bank, OP1..OP6 bank A..F, PIT..the last key pitch -12 -5 0 +7 +12
  *   ARP         dice: randomise the track   SEL + ARP   clear the track
  *   SAVE        keep patterns and sounds in flash
- *   STEP mode, the upper row: OP1..OP6 mute KICK..MEME (SEL held: solo), PIT GLO MONO POLY pattern 1..4,
+ *   STEP mode, the upper row: OP1..OP6 mute KICK..MEME (SEL held: solo), PIT GLO MONO POLY pattern 1..4
+ *               (first press: show and edit it, the playing one goes on; second press: activate it),
  *   the unlabelled key on the right: chain
  *
  * Float DSP on the FPU (-mfprev1), single precision only. render() runs in the audio interrupt. */
@@ -253,7 +254,9 @@ static void params_default(int ctx)
 
 /* ------------------------------------------------------------------ patterns */
 typedef struct { uint8_t s[NTR][NSTEP]; } pat_t;
-static pat_t PAT[NPAT];
+static pat_t PAT[NPAT];                                  /* what you see and edit */
+static pat_t LIVE[NPAT];                                 /* what plays: an edit reaches it when its pattern is activated */
+static uint8_t pending[NPAT];                            /* edits not yet activated */
 enum { T_KICK, T_HAT, T_BASS, T_ARP, T_LEAD, T_MEME };
 static const char *const TNAME[NTR] = {"TEK-KICK", "HI-HATS", "8BIT BASS", "CHIP ARP", "8BIT LEAD", "MEME FX"};
 static const char TLET[NTR] = {'K', 'H', 'B', 'A', 'L', 'M'};
@@ -964,7 +967,7 @@ static void meme_run(float *l, float *r, int a, int b)
 /* ------------------------------------------------------------------ sequencer + render */
 static int32_t step_in;                                  /* samples until the next step */
 static float step_acc;
-static int seq_step;                                     /* the step that plays next */
+static int seq_step, first_bar;                                     /* the step that plays next */
 static float trk_g[NTR];
 static float comp_env, crush_hold[2];
 static uint32_t crush_cnt;
@@ -981,14 +984,14 @@ static int pick_pattern(void)
         int p = (pat_play + k) % NPAT;
         for (int t = 0; t < NTR; t++)
             for (int i = 0; i < NSTEP; i++)
-                if (PAT[p].s[t][i]) return p;
+                if (LIVE[p].s[t][i]) return p;
     }
     return pat_play;
 }
 static void play_step(int s)
 {
-    if (s == 0) pat_play = (uint8_t)pick_pattern();
-    const pat_t *p = &PAT[pat_play];
+    if (s == 0) { if (first_bar) first_bar = 0; else pat_play = (uint8_t)pick_pattern(); }
+    const pat_t *p = &LIVE[pat_play];
     if (p->s[T_KICK][s] && audible(T_KICK)) kick_trig(p->s[T_KICK][s] == 2);
     if (p->s[T_HAT][s] && audible(T_HAT)) hat_trig(p->s[T_HAT][s], s);
     if (p->s[T_BASS][s] && audible(T_BASS)) bass_trig(p->s[T_BASS][s]);
@@ -1031,7 +1034,7 @@ static void take_requests(void)
             bass_trig(1); bass.f = bass.ft = f; bass_lastf = f; break;
         }
         case R_ARP: arp_trig(q.a); break;
-        case R_START: playing = 1; seq_step = 0; step_in = 0; step_acc = 0.0f; lfo_pos = 0.0f; step_count = 0; break;
+        case R_START: playing = 1; pat_play = pat_next; first_bar = 1; seq_step = 0; step_in = 0; step_acc = 0.0f; lfo_pos = 0.0f; step_count = 0; break;
         case R_STOP: playing = 0; cur_step = -1; lead_off(-1); break;
         case R_PANIC: lead_off(-1); for (int v = 0; v < NMV; v++) mv[v].on = 0; break;
         default: break;
@@ -1133,7 +1136,7 @@ static int store_load(void)
 {
     if (!HB_HOST_HAS(H, bank_load)) return -1;
     if (H->bank_load(&store, sizeof store) != 0 || store.magic != STORE_MAGIC || store.version != 2) return -1;
-    for (int p = 0; p < NPAT; p++) PAT[p] = store.pat[p];
+    for (int p = 0; p < NPAT; p++) { PAT[p] = store.pat[p]; LIVE[p] = PAT[p]; pending[p] = 0; }
     for (int c = 0; c < NCTX; c++)
         for (int i = 0; i < NDEF[c]; i++) {
             const pdef_t *d = &DEFS[c][i];
@@ -1169,33 +1172,59 @@ static int npages(int c) { return (NDEF[c] + 3) / 4; }
 static void cat_(char *d, const char *s) { while (*d) d++; while (*s) *d++ = *s++; *d = 0; }
 static void fmt_num_(char *d, int v) { char b[12]; int n = 0; while (*d) d++; if (v < 0) { *d++ = '-'; v = -v; } do { b[n++] = (char)('0' + v % 10); v /= 10; } while (v && n < 11); while (n) *d++ = b[--n]; *d = 0; }
 static void flash_msg(const char *s) { msg = s; msg_until = H->ms() + 1200u; if (!msg_until) msg_until = 1; dirty |= D_FOOT; }
+/* after an edit of PAT[p]: heard at once when p is the active pattern (not in a chain), else kept until p is activated */
+static void edited(int p)
+{
+    if (!chain_on && p == pat_next) { LIVE[p] = PAT[p]; pending[p] = 0; }
+    else pending[p] = 1;
+    dirty |= D_HEAD;
+}
+/* a pattern key: the first press shows and edits that pattern, the next press activates it */
+static void pattern_key(int p)
+{
+    static char m[24];
+    if (p != pat_edit) {
+        pat_edit = (uint8_t)p;
+        m[0] = 0; cat_(m, "P"); fmt_num_(m, p + 1); cat_(m, " EDIT, 2x = AKTIV");
+    } else {
+        LIVE[p] = PAT[p]; pending[p] = 0;
+        if (!chain_on) { pat_next = (uint8_t)p; if (!playing) pat_play = (uint8_t)p; }
+        m[0] = 0; cat_(m, "P"); fmt_num_(m, p + 1); cat_(m, playing && !chain_on && pat_play != p ? " AB TAKTENDE" : " AKTIV");
+    }
+    flash_msg(m);
+    dirty |= D_ALL;
+}
 
 static void leds_update(void)
 {
-    static uint32_t shown = 0xFFFFFFFFu; static int shown_step = -2, shown_mode = -1, shown_play = -1, shown_rec = -1;
-    uint32_t bits = 0;
-    const uint8_t *s = PAT[pat_edit].s[track];
-    for (int i = 0; i < NSTEP; i++) if (s[i]) bits |= 1u << i;
-    int st = playing ? cur_step : -1;
-    if (step_mode && (bits != shown || st != shown_step || shown_mode != 1)) {
-        for (int i = 0; i < NSTEP; i++) {
-            uint32_t on = (bits >> i) & 1u;
-            if (i == st) on = !on;
-            H->led(HB_LED_KEY(STEP_KEY[i]), on);
-        }
+    static uint8_t shown[27 + 14];
+    static int init;
+    uint8_t want[27 + 14];
+    const uint8_t *st_ = PAT[pat_edit].s[track];
+    int st = playing && pat_play == pat_edit ? cur_step : -1, blink = (int)((H->ms() / 250u) & 1u);
+    for (int k = 0; k < 27; k++) want[k] = 0;
+    if (step_mode) {
+        for (int i = 0; i < NSTEP; i++) { uint8_t on = st_[i] ? 1 : 0; if (i == st) on = !on; want[STEP_KEY[i]] = on; }
         for (int k = 0; k < 27; k++) if (KEY_BLACK[k] >= 0) {
             int b = KEY_BLACK[k];
-            H->led(HB_LED_KEY(k), b < 6 ? (mute[b] ? 0 : solo[b] ? 1 : 2) : b < 10 ? (b - 6 == pat_edit ? 1 : 2) : (chain_on ? 1 : 0));
+            if (b < 6) want[k] = (uint8_t)(mute[b] ? 0 : solo[b] ? 1 : 2);
+            else if (b < 10) {                           /* lit: plays; blinking: being edited, not active */
+                int p = b - 6, active = chain_on ? (playing && pat_play == p) : pat_next == p;
+                want[k] = (uint8_t)(active ? 1 : p == pat_edit ? (blink ? 1 : 0) : 2);
+            } else want[k] = (uint8_t)(chain_on ? 1 : 0);
         }
-        shown = bits; shown_step = st; shown_mode = 1;
-    } else if (!step_mode && shown_mode != 0) {
-        for (int k = 0; k < 27; k++) H->led(HB_LED_KEY(k), 0);
-        shown_mode = 0;
     }
-    if (shown_play != playing) { H->led(HB_BTN_PLAY, playing); shown_play = playing; }
-    if (shown_rec != rec) { H->led(HB_BTN_REC, rec); shown_rec = rec; }
-    static int shown_seq = -1;
-    if (shown_seq != step_mode) { H->led(HB_BTN_SEQ, step_mode); shown_seq = step_mode; }
+    for (int i = 0; i < 14; i++) want[27 + i] = 0;
+    want[27 + HB_BTN_PLAY] = playing ? 1 : 0;
+    want[27 + HB_BTN_REC] = rec ? 1 : 0;
+    want[27 + HB_BTN_SEQ] = (uint8_t)step_mode;
+    for (int k = 0; k < 27 + 14; k++)
+        if (!init || want[k] != shown[k]) {
+            if (k < 27) H->led(HB_LED_KEY(k), want[k]);
+            else if (k - 27 == HB_BTN_PLAY || k - 27 == HB_BTN_REC || k - 27 == HB_BTN_SEQ) H->led((uint32_t)(k - 27), want[k]);
+            shown[k] = want[k];
+        }
+    init = 1;
 }
 
 static void set_track(int t) { track = t; ctx = t; page = 0; dirty |= D_ALL; }
@@ -1227,6 +1256,7 @@ static void randomise(void)
         default: a[i] = (uint8_t)(r < 0.2f ? ((meme_sel - 1) / 16) * 16 + 1 + (int)(r2 * 15.99f) : 0); break;
         }
     }
+    edited(pat_edit);
     dirty |= D_GRID;
 }
 static void step_tap(int i)
@@ -1241,6 +1271,7 @@ static void step_tap(int i)
         lead_cur = i; break;
     default: *a = (uint8_t)((*a + 1) % 4); break;
     }
+    edited(pat_edit);
     dirty |= D_GRID;
 }
 static int key_note(int k) { return 53 + k + 12 * octave; }
@@ -1266,6 +1297,7 @@ static void live_key(int k, int down)
         if (track == T_MEME && KEY_STEP[k] < 0) return;
         if (playing) { int at = cur_step < 0 ? 0 : cur_step; s[at] = (uint8_t)v; }
         else { s[lead_cur] = (uint8_t)v; lead_cur = (lead_cur + 1) % NSTEP; }
+        edited(pat_edit);
         dirty |= D_GRID;
     }
 }
@@ -1289,6 +1321,7 @@ static void shift_track(int dir)
     uint8_t *a = PAT[pat_edit].s[track], t;
     if (dir > 0) { t = a[NSTEP - 1]; for (int i = NSTEP - 1; i > 0; i--) a[i] = a[i - 1]; a[0] = t; }
     else { t = a[0]; for (int i = 0; i < NSTEP - 1; i++) a[i] = a[i + 1]; a[NSTEP - 1] = t; }
+    edited(pat_edit);
     flash_msg(dir > 0 ? "PATTERN >>" : "<< PATTERN");
     dirty |= D_GRID;
 }
@@ -1310,8 +1343,9 @@ static void ui(uint32_t ev, int32_t arg)
         case HB_BTN_EDIT: {                             /* copy the pattern into the next one, go there */
             int to = (pat_edit + 1) % NPAT;
             PAT[to] = PAT[pat_edit];
-            pat_edit = (uint8_t)to; pat_next = pat_edit; if (!playing) pat_play = pat_edit;
-            static char m[16] = "KOPIE -> P1"; m[10] = (char)('1' + to); flash_msg(m);
+            pat_edit = (uint8_t)to;
+            edited(to);
+            static char m[24] = "KOPIE -> P1, 1x = AKTIV"; m[10] = (char)('1' + to); flash_msg(m);
             dirty |= D_ALL; break;
         }
         case HB_BTN_ENV: ctx = track; page = 0; dirty |= D_ALL; break;
@@ -1322,7 +1356,7 @@ static void ui(uint32_t ev, int32_t arg)
             page = track == T_BASS ? 4 : track == T_ARP ? 2 : track == T_LEAD ? 3 : 0;
             dirty |= D_ALL; break;
         case HB_BTN_ARP:
-            if (held & (1u << HB_BTN_SEL)) { for (int i = 0; i < NSTEP; i++) PAT[pat_edit].s[track][i] = 0; flash_msg("SPUR GELOESCHT"); }
+            if (held & (1u << HB_BTN_SEL)) { for (int i = 0; i < NSTEP; i++) PAT[pat_edit].s[track][i] = 0; edited(pat_edit); flash_msg("SPUR GELOESCHT"); }
             else { randomise(); flash_msg("DICE!"); }
             dirty |= D_GRID; break;
         case HB_BTN_OCT_DOWN: if (step_mode) { shift_track(-1); break; } if (octave > -2) octave--; flash_msg(octave == -2 ? "OKT -2" : octave == -1 ? "OKT -1" : octave == 0 ? "OKT 0" : "OKT +1"); break;
@@ -1373,7 +1407,7 @@ static void ui(uint32_t ev, int32_t arg)
                 int b = KEY_BLACK[k];
                 if (b < 6) {
                     if (held & (1u << HB_BTN_SEL)) solo[b] = !solo[b]; else mute[b] = !mute[b];
-                } else if (b < 10) { pat_edit = (uint8_t)(b - 6); pat_next = pat_edit; if (!playing) pat_play = pat_edit; }
+                } else if (b < 10) pattern_key(b - 6);
                 else chain_on = !chain_on;
                 dirty |= D_ALL;
             }
@@ -1432,14 +1466,17 @@ static void cv_center(int32_t x, int32_t w, int32_t y, uint32_t big, const char 
 /* rows: head 0..25, title 28..63, grid 68..123, params 128..211, foot 214..239 */
 static void draw_head(void)
 {
-    char s[40] = "g0dsgift  P", b[12];
+    char s[40] = "MEMETEK FM1 P", b[12];
     fmt_num(b, pat_edit + 1, 0); cat(s, b);
-    if (chain_on) cat(s, " CHAIN");
+    if (pending[pat_edit]) cat(s, "*");                  /* edits not yet activated */
     H->cv_begin(240, 26, MC_BG);
     H->cv_text(4, 4, 0, s, MC_TXT);
     s[0] = 0;
-    cat(s, playing ? "> " : "|| ");
-    fmt_num(b, (int)(V[CTX_GLO][G_BPM] + 0.5f), 0); cat(s, b); cat(s, " BPM");
+    cat(s, playing ? ">P" : "||P");
+    fmt_num(b, (playing ? pat_play : pat_next) + 1, 0); cat(s, b);
+    if (chain_on) cat(s, "C");
+    cat(s, " ");
+    fmt_num(b, (int)(V[CTX_GLO][G_BPM] + 0.5f), 0); cat(s, b);
     cv_right(236, 4, 0, s, playing ? HB_RGB(120, 255, 150) : MC_DIM);
     H->cv_rect(0, 25, 240, 1, MC_LINE);
     H->cv_blit(0, 0);
@@ -1534,6 +1571,8 @@ static void draw(uint32_t full)
     if (full) { dirty = 0xFFFFFFFFu; H->fill(0, 0, 240, 240, MC_BG); }
     if (msg && msg_was != msg_until && (int32_t)(H->ms() - msg_until) >= 0) { msg_was = msg_until; dirty |= D_FOOT; }
     if (was_playing != playing) { was_playing = playing; dirty |= D_HEAD | D_GRID; }
+    static int was_pat = -1;
+    if (was_pat != pat_play) { was_pat = pat_play; dirty |= D_HEAD | D_GRID; }
     int st = playing && pat_play == pat_edit ? cur_step : -1;
     if (st != last_drawn_step) dirty |= D_GRID;
     if (dirty & D_HEAD) draw_head();
@@ -1561,9 +1600,11 @@ static int init(const hb_host_t *h)
     for (int c = 0; c < NCTX; c++) params_default(c);
     patterns_default();
     store_load();
+    for (int p = 0; p < NPAT; p++) { LIVE[p] = PAT[p]; pending[p] = 0; }
+    pat_edit = pat_next = pat_play = 0;
     for (int t = 0; t < NTR; t++) trk_g[t] = 0.0f;
     dirty = 0xFFFFFFFFu;
-    H->log("g0dsgift: ready");
+    H->log("memetek fm1: ready");
     return 0;
 }
 static void release(void)
@@ -1573,4 +1614,4 @@ static void release(void)
     for (int v = 0; v < NMV; v++) mv[v].on = 0;
 }
 static const hb_param_t PARAMS[] = {{"BPM", 60, 200, 160}};
-HB_DESC = {HB_ABI, "G0DSGIFT", init, release, note, cc, render, ui, draw, PARAMS, 1, HB_F_SCREEN | HB_F_PANEL, 0, 0};
+HB_DESC = {HB_ABI, "MEMETEK FM1", init, release, note, cc, render, ui, draw, PARAMS, 1, HB_F_SCREEN | HB_F_PANEL, 0, 0};

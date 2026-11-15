@@ -30,7 +30,7 @@ jobs:
       attestations: write
     with:
       build: ./build.sh ${{ github.ref_type == 'tag' && format('--release {0}', github.ref_name) || '' }}
-      packages: build/g0dsgift*
+      packages: build/memetek-fm1*
   release:
     # a push to main publishes its packages as the release vX.Y of the VERSION file (updated in place until VERSION changes)
     needs: build
@@ -50,17 +50,17 @@ jobs:
         with:
           tag_name: v${{ steps.v.outputs.v }}
           target_commitish: ${{ github.sha }}
-          name: g0dsgift v${{ steps.v.outputs.v }}
+          name: Memetek FM1 v${{ steps.v.outputs.v }}
           prerelease: true
           overwrite_files: true
           files: |
-            dist/build/g0dsgift*
+            dist/build/memetek-fm1*
             dist/SHA256SUMS
           body: |
-            g0dsgift v${{ steps.v.outputs.v }}, die Groovebox für 8-Bit-Memetek (build ${{ github.sha }}). Noch nicht auf echter Hardware getestet: Installieren auf eigene Gefahr.
+            Memetek FM1 v${{ steps.v.outputs.v }}, die Groovebox für 8-Bit-Memetek (build ${{ github.sha }}). Noch nicht auf echter Hardware getestet: Installieren auf eigene Gefahr.
 
-            **g0dsgift.dock**: das Modul für fm1-dock. fm1-dock einmal installieren (https://joakimeriksson.github.io/fm1-dock/#install), dann die Datei auf die Konsole ziehen (https://joakimeriksson.github.io/fm1-dock/#console). Am FM-1 HOME halten und G0DSGIFT wählen.
-            **g0dsgift.fwsc**: dieselbe Firmware eigenständig (fm1-dock mit G0DSGIFT allein, Identität FM-1_964).
+            **memetek-fm1.dock**: das Modul für fm1-dock. fm1-dock einmal installieren (https://joakimeriksson.github.io/fm1-dock/#install), dann die Datei auf die Konsole ziehen (https://joakimeriksson.github.io/fm1-dock/#console). Am FM-1 HOME halten und MEMETEK FM1 wählen.
+            **memetek-fm1.fwsc**: dieselbe Firmware eigenständig (fm1-dock mit Memetek FM1 allein, Identität FM-1_964).
             Zurück: FM-1 Firmware Hub (https://fm1.designburgapps.com) oder M-VAVEs Updater.
   pages:
     # the site: the packages, the browser prototype and a link that opens the firmware in fm1-emu
@@ -86,7 +86,7 @@ jobs:
           python3 tools/handbuch.py --html _site
           cp site/index.html _site/
           cp web/index.html _site/prototype.html
-          cp dist/build/g0dsgift* dist/SHA256SUMS _site/
+          cp dist/build/memetek-fm1* dist/SHA256SUMS _site/
       - uses: actions/upload-pages-artifact@v3
       - id: deploy
         uses: actions/deploy-pages@v4

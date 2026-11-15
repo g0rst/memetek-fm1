@@ -1,8 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Build G0DSGIFT on fm1-dock (https://github.com/joakimeriksson/fm1-dock):
-#   build/g0dsgift.dock    the module: drop it on fm1-dock's console page, or tools/dock.py deploy
-#   build/g0dsgift.fwsc    a solo firmware: fm1-dock with G0DSGIFT alone, installable like any FM-1 firmware
+# Build Memetek FM1 on fm1-dock (https://github.com/joakimeriksson/fm1-dock):
+#   build/memetek-fm1.dock    the module: drop it on fm1-dock's console page, or tools/dock.py deploy
+#   build/memetek-fm1.fwsc    a solo firmware: fm1-dock with Memetek FM1 alone, installable like any FM-1 firmware
 #
 #   ./build.sh [--release X.Y]      needs the JieLi toolchain ($JIELI_TOOLCHAIN) and the AC79 SDK ($AC79_SDK),
 #                                   as zvenson/fm1-build installs them on GitHub
@@ -29,18 +29,17 @@ fi
 [ "$FETCH_ONLY" = 1 ] && exit 0
 
 # the module, inside fm1-dock's tree (its tools find modules/<name>)
-rm -rf build/fm1-dock/modules/g0dsgift
-cp -r modules/g0dsgift build/fm1-dock/modules/g0dsgift
+rm -rf build/fm1-dock/modules/memetek
+cp -r modules/memetek build/fm1-dock/modules/memetek
 cd build/fm1-dock
-python3 tools/hbmod.py modules/g0dsgift
-cp build/modules/g0dsgift.dock ../g0dsgift.dock
+python3 tools/hbmod.py modules/memetek
+cp build/modules/memetek.dock ../memetek-fm1.dock
 # the solo firmware
 if [ -n "$REL" ]; then
-    python3 tools/build.py --modules modules/g0dsgift --name g0dsgift --app-name "G0DSGIFT" --identity "$IDENTITY" --release "$REL"
-    cp "build/g0dsgift-$REL.fwsc" ../ 2>/dev/null || cp build/g0dsgift*.fwsc ../
+    python3 tools/build.py --modules modules/memetek --name memetek-fm1 --app-name "MEMETEK FM1" --identity "$IDENTITY" --release "$REL"
 else
-    python3 tools/build.py --modules modules/g0dsgift --name g0dsgift --app-name "G0DSGIFT" --identity "$IDENTITY"
-    cp build/g0dsgift*.fwsc ../
+    python3 tools/build.py --modules modules/memetek --name memetek-fm1 --app-name "MEMETEK FM1" --identity "$IDENTITY"
 fi
+for f in build/memetek-fm1*.fwsc; do cp "$f" ../memetek-fm1.fwsc; done
 cd ../..
 ls -l build/*.dock build/*.fwsc
