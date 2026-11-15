@@ -1207,7 +1207,7 @@ static void pattern_key(int p)
     static char m[24];
     if (p != pat_edit) {
         pat_edit = (uint8_t)p;
-        m[0] = 0; cat_(m, "P"); fmt_num_(m, p + 1); cat_(m, " EDIT, 2x = AKTIV");
+        m[0] = 0; cat_(m, "P"); fmt_num_(m, p + 1); cat_(m, ": 2x = AKTIV");
     } else {
         LIVE[p] = PAT[p]; pending[p] = 0;
         if (!chain_on) { pat_next = (uint8_t)p; if (!playing) pat_play = (uint8_t)p; }
@@ -1367,7 +1367,7 @@ static void ui(uint32_t ev, int32_t arg)
             PAT[to] = PAT[pat_edit];
             pat_edit = (uint8_t)to;
             edited(to);
-            static char m[24] = "KOPIE -> P1, 1x = AKTIV"; m[10] = (char)('1' + to); flash_msg(m);
+            static char m[24] = "KOPIE->P1 1x=AKTIV"; m[8] = (char)('1' + to); flash_msg(m);
             dirty |= D_ALL; break;
         }
         case HB_BTN_ENV: ctx = track; page = 0; dirty |= D_ALL; break;
