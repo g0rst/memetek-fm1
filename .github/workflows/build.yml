@@ -14,6 +14,7 @@ jobs:
       - name: Host tests (the module on a fake FM-1, with sanitizers)
         run: |
           python3 -m pip install Pillow
+          python3 tools/handbuch.py --check
           tests/run_host.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
         if: always()
@@ -81,6 +82,8 @@ jobs:
           path: dist
       - run: |
           mkdir -p _site
+          python3 -m pip install markdown
+          python3 tools/handbuch.py --html _site/handbuch.html
           cp site/index.html _site/
           cp web/index.html _site/prototype.html
           cp dist/build/memetek* dist/SHA256SUMS _site/

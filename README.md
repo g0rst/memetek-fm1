@@ -3,9 +3,11 @@
 Memecore, lustige Sounds und 8-Bit-Klänge, dazu Tek-Kick und rollende Bass-Pattern. MEMETEK läuft als Modul für
 [fm1-dock](https://github.com/joakimeriksson/fm1-dock) oder als eigenständige Firmware.
 
-**Status: v0.2. Läuft im FM-1-Emulator, auf echter Hardware noch ungetestet.**
+**Status: v0.3. Läuft im FM-1-Emulator, auf echter Hardware noch ungetestet.**
 
 **Ohne Gerät ausprobieren:** https://g0rst.github.io/memetek-fm1/ (dort im Emulator testen)
+
+**Handbuch:** https://g0rst.github.io/memetek-fm1/handbuch.html (Quelle: [docs/HANDBUCH.md](docs/HANDBUCH.md))
 
 - 6 Spuren: TEK-KICK, HI-HATS, 8BIT BASS, CHIP ARP, 8BIT LEAD, MEME FX
 - 16-Step-Sequencer, 4 Pattern, Chain

@@ -1374,6 +1374,7 @@ static void draw_grid(void)
             else if (track == T_LEAD) { const char *t = NN[a[i] % 12]; lb[0] = t[0]; lb[1] = t[1]; }
             else if (track == T_HAT) lb[0] = a[i] == 2 ? 'O' : a[i] == 3 ? 'R' : 'x';
             else if (track == T_KICK) lb[0] = a[i] == 2 ? '!' : 0;
+            else if (track == T_ARP) { static const char *const AL[4] = {"", "I", "IV", "V"}; const char *t = AL[a[i] & 3]; lb[0] = t[0]; lb[1] = t[1]; }
             else lb[0] = "?158"[a[i] & 3];
             if (lb[0]) cv_center(x, 27, y + 4, 0, lb, 0x0000u);
         }
