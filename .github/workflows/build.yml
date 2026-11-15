@@ -52,7 +52,9 @@ jobs:
           name: MEMETEK v${{ steps.v.outputs.v }}
           prerelease: true
           overwrite_files: true
-          files: dist/*
+          files: |
+            dist/build/memetek*
+            dist/SHA256SUMS
           body: |
             MEMETEK v${{ steps.v.outputs.v }} (build ${{ github.sha }}). Noch nicht auf echter Hardware getestet: Installieren auf eigene Gefahr.
 
