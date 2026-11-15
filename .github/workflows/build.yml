@@ -1,0 +1,32 @@
+name: build
+# Every push to main builds the module and the solo firmware (download them from the run's "packages" artifact);
+# a tag v* also makes a GitHub release with them.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
+      - name: Host tests (the module on a fake FM-1, with sanitizers)
+        run: |
+          python3 -m pip install Pillow
+          tests/run_host.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        if: always()
+        with:
+          name: host-test
+          path: build/host/*
+  build:
+    needs: test
+    uses: zvenson/fm1-build/.github/workflows/build.yml@v1
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    with:
+      build: ./build.sh ${{ github.ref_type == 'tag' && format('--release {0}', github.ref_name) || '' }}
+      packages: build/memetek*
