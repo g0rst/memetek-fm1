@@ -249,6 +249,21 @@ int main(int argc, char **argv)
         V[T_BASS][B_WAVE] = 0; V[T_ARP][A_WAVE] = 0; V[T_LEAD][L_WAVE] = 0;
         expect(silent == 0, "every synthesis sounds (bass, arp, lead: supersaw, FM, PWM, sync, fold ...)");
     }
+    /* the meme LFO: every target, every rate and shape, sounds and stays finite */
+    {
+        int bad = 0;
+        V[T_MEME][M_LD] = 0.9f;
+        for (int tg = 0; tg < 6; tg++)
+            for (int r = 0; r < 8; r += 3)
+                for (int sh = 0; sh < 5; sh += 2) {
+                    V[T_MEME][M_LT] = (float)tg; V[T_MEME][M_LR] = (float)r; V[T_MEME][M_LS] = (float)sh;
+                    post(R_MEME, (uint8_t)meme_id("SIREN"), 0);
+                    double pk = window(200);
+                    if (pk < 0.01 || nans) { printf("     meme LFO target %d rate %d shape %d: %.3f\n", tg, r, sh, pk); bad++; }
+                }
+        V[T_MEME][M_LD] = 0;
+        expect(bad == 0, "meme LFO: all targets sound");
+    }
     /* the upper row's pitch keys in PLAY mode */
     key(25, 1); key(25, 0);
     expect(live_shift == 12, "MEME live pitch +12");

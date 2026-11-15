@@ -168,6 +168,7 @@ static const char *const L_LTL[] = {"PITCH", "VOL", "TONE", "PAN", "TIMBRE"};
 static const char *const L_LWAVE[] = {"SQUARE", "PULSE25", "PULSE12", "TRI", "SAW", "NOISE", "SUPERSAW", "FM", "PWM", "SYNC", "FOLD"};
 static const char *const L_LARP[] = {"AUS", "OKTAVE", "DUR", "MOLL"};
 static const char *const L_MMODE[] = {"NORMAL", "STUTTER"};
+static const char *const L_LTM[] = {"PITCH", "VOL", "TONE", "PAN", "ECHO", "LAENGE"};
 static const char *const L_ETIME[] = {"1/16", "1/8", "3/16", "1/4"};
 
 #define P(n, lo, hi, st, d, f) {n, lo, hi, st, d, f, 0, -1, -1}
@@ -206,10 +207,11 @@ static const pdef_t D_LEAD[] = {
     P("ATTACK", 0, 0.3f, 0.005f, 0, F_MS), P("DECAY", 0.05f, 2, 0.01f, 0.4f, F_S), P("SUSTAIN", 0, 1, 0.01f, 0.6f, F_PCT), PL("ARP", 3, 0, L_LARP),
     PL("LFO ZIEL", 4, 0, L_LTL), PL("RATE", 7, 4, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE),
     P("TIMBRE", 0, 1, 0.01f, 0.5f, F_PCT), P("T-ENV", -1, 1, 0.01f, 0, F_PM), P("WIDTH", 0, 1, 0.01f, 0.5f, F_PCT), PN};
-enum { M_PITCH, M_LEN, M_MODE, M_VOL, M_RND, M_ECHO, M_ETIME, M_FB };
+enum { M_PITCH, M_LEN, M_MODE, M_VOL, M_RND, M_ECHO, M_ETIME, M_FB, M_LT, M_LR, M_LD, M_LS };
 static const pdef_t D_MEME[] = {
     P("PITCH", -12, 12, 1, 0, F_ST), P("LAENGE", 0.1f, 1, 0.01f, 1, F_PCT), PL("MODE", 1, 0, L_MMODE), P("VOL", 0, 1, 0.01f, 0.5f, F_PCT),
-    P("RND-PITCH", 0, 12, 1, 0, F_INT), P("ECHO", 0, 1, 0.01f, 0, F_PCT), PL("E-ZEIT", 3, 1, L_ETIME), P("FEEDBK", 0, 0.9f, 0.01f, 0.4f, F_PCT)};
+    P("RND-PITCH", 0, 12, 1, 0, F_INT), P("ECHO", 0, 1, 0.01f, 0, F_PCT), PL("E-ZEIT", 3, 1, L_ETIME), P("FEEDBK", 0, 0.9f, 0.01f, 0.4f, F_PCT),
+    PL("LFO ZIEL", 5, 0, L_LTM), PL("RATE", 7, 5, L_RATE), P("DEPTH", -1, 1, 0.01f, 0, F_PM), PL("FORM", 4, 0, L_SHAPE)};
 /* the mixer: volumes are the tracks' own (aliases) */
 enum { X_MASTER = 6 };
 static const pdef_t D_MIX[] = {
@@ -229,7 +231,7 @@ static const pdef_t D_GLO[] = {
 #define NCTX 8
 #define MAXP 24
 static const pdef_t *const DEFS[NCTX] = {D_KICK, D_HAT, D_BASS, D_ARP, D_LEAD, D_MEME, D_MIX, D_GLO};
-static const uint8_t NDEF[NCTX] = {8, 12, 24, 16, 20, 8, 24, 4};
+static const uint8_t NDEF[NCTX] = {8, 12, 24, 16, 20, 12, 24, 4};
 static float V[NCTX][MAXP];
 
 static float *pval(int ctx, int i)
@@ -788,6 +790,9 @@ typedef struct {
     int cr;
 } mv_t;
 static mv_t mv[NMV];
+static float meme_pmul = 1.0f;                          /* the meme LFO: pitch of every meme voice, block rate */
+static int meme_ltg; static float meme_lv;              /* its target and value this block */
+static svf_t meme_lpl, meme_lpr;
 static int mv_rr;
 static float meme_ramp_k(float f0, float f1, float sec)
 {
@@ -864,7 +869,8 @@ static void meme_trig(int idx, int step)
     for (int l = 0; l < m->nl && l < 4; l++) {
         mv_t *v = &mv[mv_rr++ % NMV];
         const layer_t *L = &m->L[l];
-        v->L = L; v->on = 1; v->pitch = pitch * semis((float)live_shift); v->ts = V[5][M_LEN];
+        v->L = L; v->on = 1; v->pitch = pitch * semis((float)live_shift);
+        v->ts = (meme_ltg == 5 && V[5][M_LD] != 0.0f) ? clampf(V[5][M_LEN] + meme_lv * 0.5f, 0.05f, 1.0f) : V[5][M_LEN];
         v->rep = L->reps > 1 ? L->reps : 1; v->repamp = 1.0f;
         v->period = (int32_t)(L->gap * v->ts * FS);
         v->wait = (int32_t)(L->delay * v->ts * FS);
@@ -908,7 +914,7 @@ static void meme_run(float *l, float *r, int a, int b)
                 v->cut *= fexp2(flog2(v->kcut) * 16.0f);
             }
             v->f *= v->kf;
-            float f = v->f;
+            float f = v->f * meme_pmul;
             if (v->vibd > 0.0f) { v->vph += L->vibf * INV_FS; f *= 1.0f + fsin1(v->vph) * v->vibd; v->vibd *= v->kvib; }
             if (L->jitd > 0.0f) {
                 v->jcnt += L->jitf * INV_FS;
@@ -1048,6 +1054,11 @@ static void render(int32_t *out, uint32_t n)
     sps = FS * 60.0f / (bpm * 4.0f);
     for (int t = 0; t < NTR; t++)
         for (uint32_t i = 0; i < n; i++) TL[t][i] = TR_[t][i] = 0.0f;
+    {   /* the meme LFO, once a block */
+        int tg; float v = lfo_val(5, M_LT, M_LR, M_LD, M_LS, lfo_pos, 333, &tg);
+        meme_ltg = V[5][M_LD] != 0.0f ? tg : -1; meme_lv = v;
+        meme_pmul = meme_ltg == 0 ? semis(v * 12.0f) : 1.0f;
+    }
     take_requests();
     int pos = 0;
     while (pos < (int)n) {
@@ -1080,12 +1091,23 @@ static void render(int32_t *out, uint32_t n)
     if (playing) step_in -= (int32_t)n;
     for (int e = 0; e < nev; e++) evq[e].at -= (int32_t)n;
 
+    /* the meme LFO on the MEME track: volume, tone, pan */
+    if (meme_ltg >= 1 && meme_ltg <= 3) {
+        float v = meme_lv, g = meme_ltg == 1 ? clampf(1.0f + v, 0.0f, 2.0f) : 1.0f;
+        float pl = meme_ltg == 3 && v > 0.0f ? 1.0f - v : 1.0f, pr = meme_ltg == 3 && v < 0.0f ? 1.0f + v : 1.0f;
+        if (meme_ltg == 2) {
+            svf_set(&meme_lpl, clampf(2500.0f * fexp2(v * 2.3f), 150.0f, 16000.0f), qdb(3.0f));
+            meme_lpr.g = meme_lpl.g; meme_lpr.k = meme_lpl.k; meme_lpr.a1 = meme_lpl.a1; meme_lpr.a2 = meme_lpl.a2; meme_lpr.a3 = meme_lpl.a3;
+            for (uint32_t i = 0; i < n; i++) { TL[T_MEME][i] = svf_run(&meme_lpl, TL[T_MEME][i], 0); TR_[T_MEME][i] = svf_run(&meme_lpr, TR_[T_MEME][i], 0); }
+        } else for (uint32_t i = 0; i < n; i++) { TL[T_MEME][i] *= g * pl; TR_[T_MEME][i] *= g * pr; }
+    }
     /* mix: volume, pan, mute/solo (smooth), echo send */
     float gl[NTR], gr[NTR], snd[NTR], tg[NTR];
     for (int t = 0; t < NTR; t++) {
         float pan = V[CTX_MIX][8 + t];
         gl[t] = pan > 0.0f ? 1.0f - pan : 1.0f; gr[t] = pan < 0.0f ? 1.0f + pan : 1.0f;
         snd[t] = *pval(CTX_MIX, 16 + t);
+        if (t == T_MEME && meme_ltg == 4) snd[t] = clampf(snd[t] + meme_lv, 0.0f, 1.0f);
         tg[t] = audible(t) ? *pval(CTX_MIX, t) : 0.0f;
     }
     int32_t edl = (int32_t)(sps * (float)(PI_(5, M_ETIME) + 1));
@@ -1353,7 +1375,7 @@ static void ui(uint32_t ev, int32_t arg)
         case HB_BTN_GLO: ctx = CTX_GLO; page = 0; dirty |= D_ALL; break;
         case HB_BTN_LFO:                                 /* the track's LFO page, where it has one */
             ctx = track;
-            page = track == T_BASS ? 4 : track == T_ARP ? 2 : track == T_LEAD ? 3 : 0;
+            page = track == T_BASS ? 4 : track == T_ARP ? 2 : track == T_LEAD ? 3 : track == T_MEME ? 2 : 0;
             dirty |= D_ALL; break;
         case HB_BTN_ARP:
             if (held & (1u << HB_BTN_SEL)) { for (int i = 0; i < NSTEP; i++) PAT[pat_edit].s[track][i] = 0; edited(pat_edit); flash_msg("SPUR GELOESCHT"); }

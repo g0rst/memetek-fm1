@@ -1,7 +1,7 @@
 # Memetek FM1 – Manual
 
 <!-- GEN:VERSION -->
-**Version 0.5**
+**Version 0.6**
 <!-- /GEN:VERSION -->
  · the groovebox for **8-bit memetek** on the M-VAVE FM-1 · [Deutsches Handbuch](handbuch.html) · [Site with emulator](https://g0rst.github.io/memetek-fm1/) · [Source](https://github.com/g0rst/memetek-fm1)
 
@@ -20,7 +20,7 @@ fast and silly. **memetek-fm1** is the instrument for it. It turns the FM-1 into
 - **16-step sequencer** with 4 patterns, chain, copy, shift, dice and live recording
 - **96 meme sounds** in 6 banks, every one synthesised live (no samples)
 - **Synthesis:** square, pulse, saw, triangle, **supersaw**, FM, PWM, sync and fold for bass, arp and lead
-- **Sound pages:** the 4 knobs always control the 4 parameters of the current page, plus 4 LFOs (2× bass, arp, lead)
+- **Sound pages:** the 4 knobs always control the 4 parameters of the current page, plus 5 LFOs (2× bass, arp, lead, meme)
 - **Mixer** with volume, pan and echo per track, and a bitcrusher, drive and compressor on the master
 
 ## 2. Installing
@@ -73,7 +73,7 @@ that crashes twice in a row is skipped by fm1-dock at start-up.
 | **REC** | record on/off (see [Recording](#7-recording)) |
 | **SEQ** | switch between STEP mode and PLAY mode |
 | **ENV** | to the current track's pages |
-| **LFO** | straight to the track's LFO page (bass, arp, lead) |
+| **LFO** | straight to the track's LFO page (bass, arp, lead, meme) |
 | **FX** | mixer |
 | **GLO** | global: tempo, swing, crush, drive |
 | **EDIT** | copy the pattern into the next one and go there |
@@ -193,7 +193,8 @@ the LFO page.
   of the bass's synthesis. LAENGE (length) in steps, GLIDE, SWEEP (the pitch slides in on each note), DETUNE, envelope and a
   chip arpeggio. Page 4 is the LFO, page 5 the synthesis
 - **MEME FX:** PITCH transposes all memes, LAENGE (length) shortens and speeds them up. MODE STUTTER plays four short hits per
-  half step. RND-PITCH detunes each hit at random. ECHO, E-ZEIT (echo time) and FEEDBK set the echo
+  half step. RND-PITCH detunes each hit at random. ECHO, E-ZEIT (echo time) and FEEDBK set the echo. Page 3 is the meme LFO
+  with the targets PITCH (every meme sounding), VOL, TONE (filter), PAN, ECHO (send) and LAENGE (length, per hit)
 
 ### Synthesis
 
@@ -217,7 +218,7 @@ Bass, arp and lead share one oscillator. **WAVE** picks the kind of synthesis, *
 
 ### LFOs
 
-Bass (2×), arp and lead have LFOs with **ZIEL** (target: what they modulate, TIMBRE included), **RATE** (in time: 4 bars to
+Bass (2×), arp, lead and meme have LFOs with **ZIEL** (target: what they modulate, TIMBRE included), **RATE** (in time: 4 bars to
 1/32), **DEPTH** (both ways, negative = inverted) and **FORM** (shape: sine, triangle, saw, square, S&H = random per period).
 The LFOs run in time with the tempo and restart with PLAY.
 
@@ -339,6 +340,10 @@ The LFOs run in time with the tempo and restart with PLAY.
 | 2 | K2 | ECHO | 0 % … 100 % | 0 % |
 | 2 | K3 | E-ZEIT | 1/16 · 1/8 · 3/16 · 1/4 | 1/8 |
 | 2 | K4 | FEEDBK | 0 % … 90 % | 40 % |
+| 3 | K1 | LFO ZIEL | PITCH · VOL · TONE · PAN · ECHO · LAENGE | PITCH |
+| 3 | K2 | RATE | 4BAR · 2BAR · 1BAR · 1/2 · 1/4 · 1/8 · 1/16 · 1/32 | 1/8 |
+| 3 | K3 | DEPTH | -100 % … +100 % | 0 % |
+| 3 | K4 | FORM | SINE · TRI · SAW · SQUARE · S&H | SINE |
 
 #### MIXER (FX button)
 
@@ -427,6 +432,8 @@ with **OP1–OP6** and play the sounds on the 16 lower keys. **PRESETS** goes th
 - **FM growl:** bass WAVE FM, T-ENV +70 %, LFO2 on TIMBRE at 1/16 with S&H
 - **8-bit melody:** LEAD track, WAVE PULSE25, ARP DUR (major), enter note by note with REC while stopped, GLOBAL CRUSH 60 %
 - **Chaos break:** MEME MODE STUTTER, RND-PITCH 7, ECHO 40 %, flip the live pitch with the upper row
+- **Meme siren:** meme LFO on PITCH, RATE 1/2, FORM TRI, DEPTH 40 %, with bank C or F
+- **Echo dub:** meme LFO on ECHO, RATE 1BAR, FORM SINE, FEEDBK 60 %
 
 ## 14. When something doesn't work
 
@@ -445,6 +452,7 @@ Please report bugs and wishes as a [GitHub issue](https://github.com/g0rst/memet
 
 | Version | New |
 |---|---|
+| 0.6 | an LFO for MEME FX (page 3): PITCH, VOL, TONE, PAN, ECHO, LAENGE |
 | 0.5 | the name is **Memetek FM1** again; patterns: the first press of PIT/GLO/MONO/POLY shows and edits a pattern, the second activates it (plays from the end of the bar); edits of patterns that aren't active, and in a chain, are heard only once activated; the header shows the edited and the playing pattern |
 | 0.4 | name g0dsgift (genre: 8-bit memetek); synthesis for bass, arp, lead: SUPERSAW, FM, PWM, SYNC, FOLD with TIMBRE, T-ENV, WIDTH; bass filter types; LFO target TIMBRE; English manual |
 | 0.3 | manual; arp steps show I / IV / V |
