@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MEMETEK – Prototyp für das FM-1</title>
+<title>MEMETEK FM1 – Browser-Prototyp</title>
 <style>
 :root{--bg:#0e0f12;--panel:#1b1d22;--edge:#2a2d34;--txt:#e9e9ec;--dim:#8a8d96;
 --kick:#ff4d4d;--bass:#ffb02e;--chip:#3ee08f;--meme:#c86bff;--scr:#0b1a10;--scrtxt:#7dff9e}
@@ -81,12 +81,13 @@ button:active{filter:brightness(1.4)}
 .msm{font-size:9px;color:var(--dim);display:flex;justify-content:space-between}.msm b{color:var(--txt);font-weight:500}
 .mcol input[type=range]{width:100%;margin:0}
 .mcol .ms button{padding:5px 0;font-size:10px}
+.lsh.on{background:#c86bff;color:#000}.credits{font-size:11px;color:var(--dim);text-align:center;margin-top:14px}
 .note{font-size:11px;color:var(--dim);margin-top:12px}
 </style>
 </head>
 <body>
 <div class="dev">
-<h1>MEMETEK · 8-BIT TEK GROOVEBOX</h1>
+<h1>MEMETEK FM1 · 8-BIT MEMETEK GROOVEBOX</h1>
 <div class="top"><div class="screen" id="scr"></div><div class="face" id="face">:|</div></div>
 
 <div class="knobs">
@@ -100,6 +101,8 @@ button:active{filter:brightness(1.4)}
  <button id="play">▶ PLAY</button>
  <button id="rnd">🎲 RANDOM</button>
  <button id="clr">CLEAR</button>
+ <button id="tapBtn">TAP</button>
+ <button id="shL">◀</button><button id="shR">▶</button>
 </div>
 <div class="row">
  <button class="pre" data-p="tek">TEK</button>
@@ -131,13 +134,15 @@ button:active{filter:brightness(1.4)}
 
 <div class="lbl">MEME-BÄNKE · PADS (live spielen · wählt Sound für MEME-Track)</div>
 <div class="banks" id="banks"></div>
+<div class="row lshrow"><span style="font-size:11px;color:var(--dim);align-self:center">PITCH</span><button class="lsh" data-s="-12">−12</button><button class="lsh" data-s="-5">−5</button><button class="lsh on" data-s="0">0</button><button class="lsh" data-s="7">+7</button><button class="lsh" data-s="12">+12</button></div>
 <div class="pads" id="pads"></div>
 
 <div class="lbl">KEYBOARD · 8-BIT LEAD (live spielen &amp; aufnehmen)</div>
 <div class="kbwrap"><div class="kbbar"><button id="kbDown">OCT −</button><span id="kbOctV"></span><button id="kbUp">OCT +</button><button id="recBtn">● REC</button><button id="restBtn">PAUSE ▸</button></div>
 <div class="kb" id="kb"></div></div>
 
-<p class="note">MIXER: Fader ziehen für Lautstärke, PAN (Doppeltipp = Mitte), ECHO-Send pro Spur; Echo-Zeit und Feedback am Master. Spur antippen öffnet ihre Unterseiten: PAGE blättert, die 4 Regler darüber entsprechen den 4 Knobs des FM-1. Die Tonart (ROOT) steht auf Bass-Seite 3 und gilt auch für Arp und Zufalls-Melodien. Bass-Seiten 4–5 sind zwei LFOs, Arp-Seite 3 und Lead-Seite 4 je ein LFO, Meme-Seite 3 ist der Slicer. LEAD: Mit REC und laufendem Sequencer wird live auf den nächsten Step quantisiert; im Stopp schreibt jede Taste auf den markierten Step und springt weiter, PAUSE setzt eine Lücke. Antippen eines Steps schaltet durch: Kick aus/an/Akzent · Hats aus/zu/offen/Roll · Bass &amp; Arp aus/Grundton/Quinte/Oktave · Meme setzt den gewählten Pad-Sound (aus jeder Bank). M schaltet eine Spur stumm, S spielt nur die Solo-Spuren; die Pads bleiben immer live spielbar. Pattern wechseln beim Spielen am Taktende. DUP kopiert das aktuelle Pattern ins nächste. CHAIN spielt die Slots der Reihe nach. Layout wie FM-1: 16 Steps = Keys, Regler = Knobs.</p>
+<p class="note"><b>Pattern:</b> erster Klick auf P1–P4 zeigt und bearbeitet das Pattern, das laufende spielt weiter (P2* = noch nicht aktivierte Änderungen); zweiter Klick aktiviert es, es spielt ab dem Taktende. In der Chain spielen geänderte Pattern erst nach dem Aktivieren neu. DUP kopiert ins nächste Pattern. ◀ ▶ verschieben die Spur, TAP setzt das Tempo. <b>Synthese</b> (Bass, Arp, Lead): WAVE mit SUPERSAW, FM, PWM, SYNC, FOLD, geformt von TIMBRE, T-ENV und WIDTH; Bass-Seite 4 mit FILTER. <b>LFOs:</b> Bass-Seiten 5–6, Arp-Seite 3, Lead-Seite 4, Meme-Seite 4 (PITCH, VOL, TONE, PAN, ECHO, LÄNGE). Meme-Seite 3 ist der Slicer. PITCH unter den Pads transponiert alle Memes live. Steps: Kick aus/an/Akzent · Hats aus/zu/offen/Roll · Bass Grundton/Quinte/Oktave · Arp Akkord auf I/IV/V · Meme setzt den gewählten Sound. M = Mute, S = Solo. MIXER: Fader, PAN, ECHO-Send; Echo-Zeit und Feedback am Master. Layout wie FM-1: 16 Steps = Keys, Regler = Knobs. Die volle Anleitung steht im <a href="handbuch.html" style="color:#7fc4ff">Handbuch</a>.</p>
+<p class="credits">MEMETEK FM1 · Browser-Prototyp zur Firmware v0.6 · Inspiriert durch g0dsgift777 · Free all Ⓐnarchists!</p>
 </div>
 
 <script>
@@ -171,11 +176,11 @@ const NOTES=['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
 /* ---------- SOUND-PARAMETER (Unterseiten) ---------- */
 const fHz=v=>Math.round(v)+'Hz',fS=v=>(+v).toFixed(2)+'s',fMs=v=>Math.round(v*1000)+'ms',fP=v=>Math.round(v*100)+'%',
  fX=v=>'x'+(+v).toFixed(1),fQ=v=>(+v).toFixed(1),fSt=v=>(v>0?'+':'')+v,L=a=>v=>a[v];
-const WAVES=['SQUARE','PULSE','SAW','TRI'];
-const LT=['CUTOFF','RESO','PITCH','F-ENV','DECAY','SUB','VOL'],LRN=['4BAR','2BAR','1BAR','1/2','1/4','1/8','1/16','1/32'],LS=['SINE','TRI','SAW','SQUARE','S&H'];
-const CT=['PITCH','VOL','TONE','PAN','DECAY','OKTAVE'],LDT=['PITCH','VOL','TONE','PAN'];
+const WAVES=['SQUARE','PULSE','SAW','TRI','SUPERSAW','FM','PWM','SYNC','FOLD'],FILTS=['LOWPASS','BANDPASS','HIGHPASS'];
+const LT=['CUTOFF','RESO','PITCH','F-ENV','DECAY','SUB','VOL','TIMBRE'],LRN=['4BAR','2BAR','1BAR','1/2','1/4','1/8','1/16','1/32'],LS=['SINE','TRI','SAW','SQUARE','S&H'];
+const CT=['PITCH','VOL','TONE','PAN','DECAY','OKTAVE','TIMBRE'],LDT=['PITCH','VOL','TONE','PAN','TIMBRE'],MLT=['PITCH','VOL','TONE','PAN','ECHO','LÄNGE'];
 const lfoPageT=(tg,dT,dR)=>[['lft','LFO ZIEL',0,tg.length-1,1,dT,L(tg)],['lfr','RATE',0,7,1,dR,L(LRN)],['lfd','DEPTH',-1,1,.01,0,fP],['lfs','FORM',0,4,1,0,L(LS)]];
-const lfoPage=n=>[['l'+n+'t','LFO'+n+' ZIEL',0,6,1,n===1?0:2,L(LT)],['l'+n+'r','RATE',0,7,1,n===1?4:6,L(LRN)],['l'+n+'d','DEPTH',-1,1,.01,0,fP],['l'+n+'s','FORM',0,4,1,0,L(LS)]];
+const lfoPage=n=>[['l'+n+'t','LFO'+n+' ZIEL',0,7,1,n===1?0:2,L(LT)],['l'+n+'r','RATE',0,7,1,n===1?4:6,L(LRN)],['l'+n+'d','DEPTH',-1,1,.01,0,fP],['l'+n+'s','FORM',0,4,1,0,L(LS)]];
 const PS={
  kick:[
   [['tune','TUNE',30,80,1,42,fHz],['decay','DECAY',.15,.9,.01,.45,fS],['drop','DROP',2,10,.1,5,fX],['dropT','DROP-T',.01,.15,.005,.06,fMs]],
@@ -186,22 +191,26 @@ const PS={
   [['tone','TONE',.3,1.5,.01,1,fX],['accent','ACCENT',0,1,.01,0,fP],['spread','STEREO',0,1,.01,0,fP],['choke','CHOKE',0,1,1,1,L(['AUS','AN'])]]],
  bass:[
   [['cutoff','CUTOFF',100,5000,10,2400,fHz],['res','RESO',.5,20,.1,6,fQ],['fenv','F-ENV',0,1,.01,.8,fP],['decay','DECAY',.2,1.5,.05,.9,fX]],
-  [['wave','WAVE',0,3,1,0,L(WAVES)],['sub','SUB',0,1,.01,.5,fP],['glide','GLIDE',0,.2,.005,0,fMs],['vol','VOL',0,1,.01,.5,fP]],
+  [['wave','WAVE',0,8,1,0,L(WAVES)],['timbre','TIMBRE',0,1,.01,.5,fP],['sub','SUB',0,1,.01,.5,fP],['vol','VOL',0,1,.01,.5,fP]],
   [['root','ROOT',0,11,1,5,L(NOTES)],['oct','OCT',-1,1,1,0,fSt],['duck','DUCK',0,1,.01,0,fP],['drive','DRIVE',0,1,.01,0,fP]],
+  [['glide','GLIDE',0,.2,.005,0,fMs],['tenv','T-ENV',-1,1,.01,0,fP],['width','WIDTH',0,1,.01,.5,fP],['ftype','FILTER',0,2,1,0,L(FILTS)]],
   lfoPage(1),lfoPage(2)],
  chip:[
-  [['rate','RATE',0,3,1,2,L(['2/STP','3/STP','4/STP','6/STP'])],['dir','RICHTG',0,3,1,0,L(['UP','DOWN','PING','RND'])],['wave','WAVE',0,3,1,0,L(WAVES)],['vol','VOL',0,.6,.01,.22,fP]],
+  [['rate','RATE',0,3,1,2,L(['2/STP','3/STP','4/STP','6/STP'])],['dir','RICHTG',0,3,1,0,L(['UP','DOWN','PING','RND'])],['wave','WAVE',0,8,1,0,L(WAVES)],['vol','VOL',0,.6,.01,.22,fP]],
   [['oct','OCT',-1,2,1,0,fSt],['decay','DECAY',.2,1,.01,.98,fP],['vib','VIBRATO',0,1,.01,0,fP],['chord','AKKORD',0,3,1,0,L(['MOLL','DUR','SUS','POWER'])]],
-  lfoPageT(CT,0,5)],
+  lfoPageT(CT,0,5),
+  [['timbre','TIMBRE',0,1,.01,.5,fP],['tenv','T-ENV',-1,1,.01,0,fP],['width','WIDTH',0,1,.01,.5,fP]]],
  meme:[
   [['pitch','PITCH',-12,12,1,0,fSt],['len','LÄNGE',.1,1,.01,1,fP],['mode','MODE',0,3,1,0,L(['NORMAL','REVERSE','STUTTER','REV+STU'])],['vol','VOL',0,1,.01,.5,fP]],
   [['rnd','RND-PITCH',0,12,1,0,v=>'±'+v],['echo','ECHO',0,1,.01,0,fP],['etime','E-ZEIT',0,3,1,1,L(['1/16','1/8','3/16','1/4'])],['fb','FEEDBK',0,.9,.01,.4,fP]],
-  [['slc','SLICES',0,4,1,0,L(['AUS','2','4','8','16'])],['sord','FOLGE',0,3,1,0,L(['SEQ','STEP','RND','REV'])],['sgate','GATE',.1,1,.01,.9,fP],['srev','REV-CHANCE',0,1,.01,0,fP]]],
+  [['slc','SLICES',0,4,1,0,L(['AUS','2','4','8','16'])],['sord','FOLGE',0,3,1,0,L(['SEQ','STEP','RND','REV'])],['sgate','GATE',.1,1,.01,.9,fP],['srev','REV-CHANCE',0,1,.01,0,fP]],
+  lfoPageT(MLT,0,5)],
  lead:[
-  [['wave','WAVE',0,5,1,0,L(['SQUARE','PULSE25','PULSE12','TRI','SAW','NOISE'])],['len','LÄNGE',.25,4,.25,1,v=>v+' STP'],['vib','VIBRATO',0,1,.01,0,fP],['vol','VOL',0,1,.01,.35,fP]],
+  [['wave','WAVE',0,10,1,0,L(['SQUARE','PULSE25','PULSE12','TRI','SAW','NOISE','SUPERSAW','FM','PWM','SYNC','FOLD'])],['len','LÄNGE',.25,4,.25,1,v=>v+' STP'],['vib','VIBRATO',0,1,.01,0,fP],['vol','VOL',0,1,.01,.35,fP]],
   [['oct','OCT',-2,2,1,0,fSt],['glide','GLIDE',0,.3,.005,0,fMs],['sweep','SWEEP',-12,12,1,0,fSt],['det','DETUNE',0,1,.01,0,fP]],
   [['att','ATTACK',0,.3,.005,0,fMs],['dec','DECAY',.05,2,.01,.4,fS],['sus','SUSTAIN',0,1,.01,.6,fP],['arp','ARP',0,3,1,0,L(['AUS','OKTAVE','DUR','MOLL'])]],
-  lfoPageT(LDT,0,4)]
+  lfoPageT(LDT,0,4),
+  [['timbre','TIMBRE',0,1,.01,.5,fP],['tenv','T-ENV',-1,1,.01,0,fP],['width','WIDTH',0,1,.01,.5,fP]]]
 };
 const defaultSP=()=>{const o={};for(const t in PS){o[t]={};PS[t].flat().forEach(p=>o[t][p[0]]=p[5])}return o};
 let SP=defaultSP(),page={kick:0,hat:0,bass:0,chip:0,lead:0,meme:0};
@@ -222,10 +231,14 @@ let PAT=[fromPre('tek'),fromPre('meme'),fromPre('chip'),fromPre('tek')];
 PAT[3].meme=memeArr({0:'DROP',4:'SPRING',8:'RIMSHOT',12:'SAD'});PAT[3].bass=Z();
 let CHAIN=[1,1,2,2,1,1,4,0],chainOn=false;
 let M={},SO={};TR.forEach(t=>{M[t]=false;SO[t]=false});
-try{const s=JSON.parse(localStorage.getItem('memetek7')||localStorage.getItem('memetek6')||localStorage.getItem('memetek5')||localStorage.getItem('memetek4')||localStorage.getItem('memetek3'));
+try{const s=JSON.parse(localStorage.getItem('memetek8')||localStorage.getItem('memetek7')||localStorage.getItem('memetek6')||localStorage.getItem('memetek5')||localStorage.getItem('memetek4')||localStorage.getItem('memetek3'));
  if(s&&s.PAT){PAT=s.PAT;M=s.M;SO=s.SO;CHAIN=s.CHAIN;chainOn=s.chainOn;TR.forEach(t=>{PAT.forEach(p=>{if(!p[t])p[t]=Z()});if(M[t]===undefined)M[t]=false;if(SO[t]===undefined)SO[t]=false})}
  if(s&&s.SP)for(const t in SP)Object.assign(SP[t],s.SP[t]||{})}catch(e){}
-let pat=0,playPat=0,uiPat=0,chainPos=-1,uiChain=-1;
+let pat=0,playPat=0,uiPat=0,chainPos=-1,uiChain=-1,active=0;
+const cp=x=>JSON.parse(JSON.stringify(x));
+let LIVE=cp(PAT),pending=[false,false,false,false];
+/* after an edit of PAT[p]: heard at once when p is the active pattern (not in a chain), else kept until p is activated */
+function edited(p){if(!chainOn&&p===active){LIVE[p]=cp(PAT[p]);pending[p]=false}else pending[p]=true}
 let track='bass',memeSel=1,bank=0,playing=false,curStep=-1,word='READY';
 const anySolo=()=>TR.some(t=>SO[t]);
 const audible=t=>!M[t]&&(!anySolo()||SO[t]);
@@ -238,8 +251,15 @@ function tanhCurve(k){const n=2048,c=new Float32Array(n);for(let i=0;i<n;i++){co
 function shapeCurve(type,amt){const n=2048,c=new Float32Array(n),k=1+amt*14;
  for(let i=0;i<n;i++){const x=i/(n-1)*2-1;
   c[i]=type===0?Math.tanh(k*x)/Math.tanh(k):type===1?Math.max(-1,Math.min(1,x*k*.7)):Math.sin(x*(1+amt*5)*Math.PI/2)}return c}
+const ml={};let liveShift=0;
+/* the meme LFO on the MEME track (VOL, TONE, PAN, ECHO), every 20 ms; PITCH and LÄNGE act on each hit */
+function memeLfoTick(){if(!ctx)return;const p=SP.meme,n=ctx.currentTime,on=p.lfd!==0,tg=MLT[p.lft],v=on?lfoValP(p,transportPos(n),333):0;
+ ml.g.gain.setTargetAtTime(on&&tg==='VOL'?clamp(1+v,0,2):1,n,.01);
+ ml.f.frequency.setTargetAtTime(on&&tg==='TONE'?clamp(2500*Math.pow(2,v*2.3),150,16000):20000,n,.01);
+ if(ml.p.pan)ml.p.pan.setTargetAtTime(on&&tg==='PAN'?clamp(v,-1,1):0,n,.01);
+ sendG.meme.gain.setTargetAtTime(clamp(p.echo+(on&&tg==='ECHO'?v:0),0,1),n,.02)}
 let MX={pan:{},send:{},master:.8};TR.forEach(t=>{MX.pan[t]=0;MX.send[t]=0});
-try{const s=JSON.parse(localStorage.getItem('memetek7')||localStorage.getItem('memetek6')||localStorage.getItem('memetek5'));if(s&&s.MX){Object.assign(MX.pan,s.MX.pan);Object.assign(MX.send,s.MX.send);MX.master=s.MX.master}}catch(e){}
+try{const s=JSON.parse(localStorage.getItem('memetek8')||localStorage.getItem('memetek7')||localStorage.getItem('memetek6')||localStorage.getItem('memetek5'));if(s&&s.MX){Object.assign(MX.pan,s.MX.pan);Object.assign(MX.send,s.MX.send);MX.master=s.MX.master}}catch(e){}
 let pan={},ana={},sendG={},outG,masterAna;
 function initAudio(){
  if(ctx){ctx.resume();return}
@@ -255,16 +275,18 @@ function initAudio(){
  mix.connect(drive);drive.connect(cr);cr.connect(comp);comp.connect(outG);outG.connect(ctx.destination);outG.connect(masterAna);
  echo.send=ctx.createGain();echo.dl=ctx.createDelay(2);echo.fb=ctx.createGain();
  echo.send.connect(echo.dl);echo.dl.connect(echo.fb);echo.fb.connect(echo.dl);echo.dl.connect(mix);
+ ml.g=ctx.createGain();ml.f=ctx.createBiquadFilter();ml.f.type='lowpass';ml.f.frequency.value=20000;ml.f.Q.value=1.4;ml.p=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();
  for(const t of TR){
   bus[t]=ctx.createGain();bus[t].gain.value=audible(t)?SP[t].vol:0;
   pan[t]=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();if(pan[t].pan)pan[t].pan.value=MX.pan[t];
   ana[t]=ctx.createAnalyser();ana[t].fftSize=512;sendG[t]=ctx.createGain();sendG[t].gain.value=t==='meme'?SP.meme.echo:MX.send[t];
   pan[t].connect(mix);pan[t].connect(ana[t]);pan[t].connect(sendG[t]);sendG[t].connect(echo.send);
  }
- bus.kick.connect(pan.kick);bus.hat.connect(pan.hat);bus.chip.connect(pan.chip);bus.lead.connect(pan.lead);bus.meme.connect(pan.meme);
+ bus.kick.connect(pan.kick);bus.hat.connect(pan.hat);bus.chip.connect(pan.chip);bus.lead.connect(pan.lead);bus.meme.connect(ml.g);
  bus.leadLive=ctx.createGain();bus.leadLive.gain.value=SP.lead.vol;bus.leadLive.connect(pan.lead);
  bus.bassSh=ctx.createWaveShaper();bus.bassDuck=ctx.createGain();bus.bass.connect(bus.bassSh);bus.bassSh.connect(bus.bassDuck);bus.bassDuck.connect(pan.bass);
- bus.pad=ctx.createGain();bus.pad.gain.value=SP.meme.vol;bus.pad.connect(pan.meme);
+ bus.pad=ctx.createGain();bus.pad.gain.value=SP.meme.vol;bus.pad.connect(ml.g);
+ ml.f.connect(ml.p);ml.g.connect(ml.f);ml.p.connect(pan.meme);setInterval(memeLfoTick,20);
  bus.kickIn=ctx.createWaveShaper();bus.kickIn.connect(bus.kick);
  noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  applyShapers();applyKnobs();renderMemes();
@@ -358,17 +380,69 @@ function hatHit(t,lv,velMul,s){
  else noise(t,dec+.03,filt('bandpass',5200*tn,1.5,hp));
 }
 const freq=semi=>55*Math.pow(2,semi/12);
+
+/* ---------- SYNTH-OSZILLATOR (wie in der Firmware) ----------
+   SQUARE PULSE SAW TRI · SUPERSAW (7 verstimmte Saws, TIMBRE = Verstimmung, WIDTH = Stereo) · FM (Modulator eine Oktave
+   höher, TIMBRE = Index) · PWM (wandernde Pulsbreite) · SYNC (Hard-Sync-Saw, TIMBRE = Slave-Tonhöhe) · FOLD (Wavefolder) */
+const SSD=[-0.11002313,-0.06288439,-0.01952356,0,0.01991221,0.06216538,0.10745242];
+let SYNCW={},FOLDC=null;
+function syncWave(r){const key=Math.round(r*10)/10;if(SYNCW[key])return SYNCW[key];
+ const N=512,H=64,x=new Float32Array(N);for(let i=0;i<N;i++){const p=(i/N*key)%1;x[i]=2*p-1}
+ const re=new Float32Array(H),im=new Float32Array(H);
+ for(let k=1;k<H;k++){let a=0,b=0;for(let i=0;i<N;i++){const w=2*Math.PI*k*i/N;a+=x[i]*Math.cos(w);b+=x[i]*Math.sin(w)}re[k]=a*2/N;im[k]=b*2/N}
+ return SYNCW[key]=ctx.createPeriodicWave(re,im)}
+function foldCurve(){if(!FOLDC){const n=2048;FOLDC=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;FOLDC[i]=Math.sin(x*8*Math.PI/2)}}return FOLDC}
+/* mode: 0 SQUARE 1 PULSE 2 SAW 3 TRI 4 SUPERSAW 5 FM 6 PWM 7 SYNC 8 FOLD 9 PULSE12 10 NOISE
+   o: {tim, width, tenv, len}. Gibt {fps:[{fp,k}], dets:[AudioParam], stop(t)} zurück: fps folgen der Tonhöhe (Wert = f*k) */
+function synthOsc(mode,f,t,dest,o){
+ const tim=clamp(o.tim,0,1),width=o.width||0,fps=[],dets=[],nodes=[],tEnv=(p,map)=>{
+  const a=clamp(tim+(o.tenv||0),0,1);p.setValueAtTime(map(a),t);if(o.tenv)p.setTargetAtTime(map(tim),t+.002,Math.max(.01,(o.len||.3)*.15))};
+ const mk=(type,dst)=>{const x=ctx.createOscillator();if(type)x.type=type;x.connect(dst);nodes.push(x);return x};
+ if(mode===4){                                            /* SUPERSAW */
+  const cs=ctx.createConstantSource();nodes.push(cs);tEnv(cs.offset,v=>.04+.96*v);
+  const out=ctx.createGain();out.gain.value=.42;out.connect(dest);
+  SSD.forEach((d,i)=>{let dst=out;if(ctx.createStereoPanner&&i!==3){const pn=ctx.createStereoPanner();pn.pan.value=((i&1)?1:-1)*width;pn.connect(out);dst=pn}
+   const g=ctx.createGain();g.gain.value=i===3?1:.6;g.connect(dst);const x=mk('sawtooth',g);x.frequency.setValueAtTime(f,t);fps.push({fp:x.frequency,k:1});dets.push(x.detune);
+   const dg=ctx.createGain();dg.gain.value=d*1731;cs.connect(dg);dg.connect(x.detune)});
+ }else if(mode===5){                                      /* FM */
+  const c=mk('sine',dest),m=ctx.createOscillator();m.type='sine';nodes.push(m);
+  const g1=ctx.createGain(),g2=ctx.createGain();m.connect(g1);g1.connect(g2);g2.connect(c.frequency);
+  c.frequency.setValueAtTime(f,t);m.frequency.setValueAtTime(2*f,t);g1.gain.setValueAtTime(11.3*f,t);tEnv(g2.gain,v=>v);
+  fps.push({fp:c.frequency,k:1},{fp:m.frequency,k:2},{fp:g1.gain,k:11.3});dets.push(c.detune,m.detune);
+ }else if(mode===6){                                      /* PWM: Saw minus verzögerte Saw */
+  const a=ctx.createGain(),b=ctx.createGain(),dl=ctx.createDelay(.1);a.gain.value=.5;b.gain.value=-.5;a.connect(dest);b.connect(dest);
+  const x=mk('sawtooth',a);x.connect(dl);dl.connect(b);x.frequency.setValueAtTime(f,t);dl.delayTime.setValueAtTime(.5/f,t);
+  const l=ctx.createOscillator();l.frequency.value=.7;const lg=ctx.createGain();l.connect(lg);lg.connect(dl.delayTime);nodes.push(l);tEnv(lg.gain,v=>.45*v/f);
+  fps.push({fp:x.frequency,k:1});dets.push(x.detune);
+ }else if(mode===7){                                      /* SYNC */
+  const x=mk(null,dest);x.setPeriodicWave(syncWave(1+tim*7));x.frequency.setValueAtTime(f,t);fps.push({fp:x.frequency,k:1});dets.push(x.detune);
+ }else if(mode===8){                                      /* FOLD */
+  const sh=ctx.createWaveShaper();sh.curve=foldCurve();sh.connect(dest);const pg=ctx.createGain();pg.connect(sh);
+  const x=mk('sine',pg);x.frequency.setValueAtTime(f,t);tEnv(pg.gain,v=>(1+6*v)/8);fps.push({fp:x.frequency,k:1});dets.push(x.detune);
+ }else if(mode===10){                                     /* NOISE */
+  const s=ctx.createBufferSource();s.buffer=chipNoiseBuf();s.loop=true;s.connect(dest);nodes.push(s);
+  s.playbackRate.setValueAtTime(f*64/ctx.sampleRate,t);fps.push({fp:s.playbackRate,k:64/ctx.sampleRate});if(s.detune)dets.push(s.detune);
+ }else{                                                   /* SQUARE PULSE SAW TRI PULSE12 */
+  const x=mk(null,dest);if(mode===1)x.setPeriodicWave(pulseWave(.25));else if(mode===9)x.setPeriodicWave(pulseWave(.125));else x.type=['square','','sawtooth','triangle'][mode];
+  x.frequency.setValueAtTime(f,t);fps.push({fp:x.frequency,k:1});dets.push(x.detune);
+ }
+ nodes.forEach(n=>n.start(t));
+ return{fps,dets,stop(t2){nodes.forEach(n=>{try{n.stop(t2)}catch(e){}})}};
+}
+const setF=(v,f,t)=>v.fps.forEach(({fp,k})=>fp.setValueAtTime(f*k,t));
+const rampF=(v,f,t)=>v.fps.forEach(({fp,k})=>fp.exponentialRampToValueAtTime(Math.max(1e-4,f*k),t));
+
 const CHORDS=[[0,3,7,12],[0,4,7,12],[0,5,7,12],[0,7,12,19]],CHL=[0,0,5,7];
 function chip(t,lv,dur){
  const p=SP.chip,pos=transportPos(t),C=lfoChain(p,CT,bus.chip),v0=C.tg?lfoValP(p,pos,555):0;
  const octJ=C.tg==='OKTAVE'?Math.round(v0*2):0,decM=C.tg==='DECAY'?clamp(1+v0,.15,2):1;
  const base=SP.bass.root+36+12*(p.oct+octJ)+CHL[lv],ch=CHORDS[p.chord],m=ch.length,n=[2,3,4,6][p.rate],sub=dur/n,Ln=dur*clamp(p.decay*decM,.1,2);
- const g=vca(C.dest),o=osc('square',freq(base),t,Ln,g);setWave(o,p.wave);
- if(p.vib>0)lfo(6,p.vib*60,o.detune,t,Ln);
- if(C.tg==='PITCH')C.nodes.det=[[o.detune,0]];
- if(C.tg&&C.tg!=='OKTAVE'&&C.tg!=='DECAY')lfoAutomate(p,t,Ln,pos,C.nodes,555);
+ const g=vca(C.dest),v=synthOsc(p.wave,freq(base),t,g,{tim:p.timbre+(C.tg==='TIMBRE'?v0:0),width:p.width,tenv:C.tg==='TIMBRE'?0:p.tenv,len:Ln});v.stop(t+Ln+.05);
+ if(p.vib>0){const lg=lfo(6,p.vib*60,v.dets[0],t,Ln);v.dets.slice(1).forEach(d=>lg.connect(d))}
+ if(C.tg==='PITCH')C.nodes.det=v.dets.map(d=>[d,0]);
+ if(C.tg&&C.tg!=='OKTAVE'&&C.tg!=='DECAY'&&C.tg!=='TIMBRE')lfoAutomate(p,t,Ln,pos,C.nodes,555);
  for(let i=0;i<n;i++){let k;if(p.dir===0)k=i%m;else if(p.dir===1)k=m-1-(i%m);else if(p.dir===2){const per=2*m-2,j=i%per;k=j<m?j:per-j}else k=Math.random()*m|0;
-  o.frequency.setValueAtTime(freq(base+ch[k]),t+i*sub)}
+  setF(v,freq(base+ch[k]),t+i*sub)}
  g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+Ln*.98);
 }
 function hornHit(t,d,Ln){const bp=filt('bandpass',1300,.8,d),g=vca(bp);[466,470,698,703].forEach(f=>osc('sawtooth',f,t,Ln+.1,g));gate(g,t,.015,.7,Ln,.08)}
@@ -568,10 +642,11 @@ function bass(t,lv,dur,pos){
  const pit=v=>Math.pow(2,(v.PITCH||0)/12),f=freq(p.root+12*p.oct+IV[lv]),f0=f*pit(m0),f1=f*pit(m1);
  const cut=v=>clamp(p.cutoff*Math.pow(2,3*(v.CUTOFF||0)),60,12000),c0=cut(m0),c1=cut(m1);
  const fenv=clamp(p.fenv+(m0['F-ENV']||0),0,1),res=clamp(p.res+(m0.RESO||0)*10,.5,25),sub=clamp(p.sub+(m0.SUB||0),0,1),vol=.8*clamp(1+(m0.VOL||0),0,2);
- const g=vca(bus.bass),lp=filt('lowpass',c0,res,g),sg=ctx.createGain();sg.gain.value=sub;sg.connect(g);
- const o=osc('square',f0,t,Ln,lp);setWave(o,p.wave);const s=osc('triangle',f0/2,t,Ln,sg);
- if(p.glide>0&&lastBF){o.frequency.setValueAtTime(lastBF,t);o.frequency.exponentialRampToValueAtTime(f0,t+p.glide);s.frequency.setValueAtTime(lastBF/2,t);s.frequency.exponentialRampToValueAtTime(f0/2,t+p.glide)}
- if(f1!==f0&&Ln>p.glide+.01){o.frequency.exponentialRampToValueAtTime(f1,t+Ln);s.frequency.exponentialRampToValueAtTime(f1/2,t+Ln)}
+ const g=vca(bus.bass),lp=filt(FILTS[p.ftype].toLowerCase(),c0,res,g),sg=ctx.createGain();sg.gain.value=sub;sg.connect(g);
+ const lt=(m0.TIMBRE||0)!==0,o=synthOsc(p.wave,f0,t,lp,{tim:p.timbre+(m0.TIMBRE||0),width:p.width,tenv:lt?0:p.tenv,len:Ln});o.stop(t+Ln+.05);
+ const s=osc('triangle',f0/2,t,Ln,sg);
+ if(p.glide>0&&lastBF){setF(o,lastBF,t);rampF(o,f0,t+p.glide);s.frequency.setValueAtTime(lastBF/2,t);s.frequency.exponentialRampToValueAtTime(f0/2,t+p.glide)}
+ if(f1!==f0&&Ln>p.glide+.01){rampF(o,f1,t+Ln);s.frequency.exponentialRampToValueAtTime(f1/2,t+Ln)}
  lastBF=f0;
  lp.frequency.setValueAtTime(c0,t);lp.frequency.exponentialRampToValueAtTime(Math.max(50,c1*(1-fenv*.92)),t+Ln*.8);
  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||.0001,t+.003);g.gain.exponentialRampToValueAtTime(.001,t+Ln*.95);
@@ -585,19 +660,19 @@ let lastLead=0,chipNoise=null;
 function chipNoiseBuf(){if(!chipNoise){chipNoise=ctx.createBuffer(1,64,ctx.sampleRate);const d=chipNoise.getChannelData(0);for(let i=0;i<64;i++)d[i]=Math.random()<.5?-1:1}return chipNoise}
 function leadVoice(t,note,dest,dur){
  const p=SP.lead,f=mtof(note+12*p.oct),pos=transportPos(t),C=lfoChain(p,LDT,dest),g=vca(C.dest),srcs=[];
- const mk=det=>{
-  if(p.wave===5){const s=ctx.createBufferSource();s.buffer=chipNoiseBuf();s.loop=true;s.connect(g);s.start(t);srcs.push({n:s,fp:s.playbackRate,k:64/ctx.sampleRate,dp:s.detune,b:0})}
-  else{const o=ctx.createOscillator();if(p.wave===1)o.setPeriodicWave(pulseWave(.25));else if(p.wave===2)o.setPeriodicWave(pulseWave(.125));else o.type=['square','','','triangle','sawtooth'][p.wave];
-   o.detune.value=det;o.connect(g);o.start(t);srcs.push({n:o,fp:o.frequency,k:1,dp:o.detune,b:det});if(p.vib>0)lfo(6,p.vib*45,o.detune,t,8)}};
- mk(p.det?-p.det*20:0);if(p.det>0)mk(p.det*20);
+ const LWMAP=[0,1,9,3,2,10,4,5,6,7,8],mode=LWMAP[p.wave],tl=C.tg==='TIMBRE',tv=tl?lfoValP(p,pos,999):0;
+ const mk=det=>{const v=synthOsc(mode,f,t,g,{tim:p.timbre+tv,width:p.width,tenv:tl?0:p.tenv,len:p.dec*2});
+  v.dets.forEach(d=>d.setValueAtTime(det,t));if(p.vib>0){const lg=lfo(6,p.vib*45,v.dets[0],t,8);v.dets.slice(1).forEach(d=>lg.connect(d))}
+  v.fps.forEach(x=>srcs.push({v,fp:x.fp,k:x.k}));v.dets.forEach(d=>srcs.push({v,dp:d,b:det}))};
+ const dual=p.det>0&&mode!==4;mk(dual?-p.det*20:0);if(dual)mk(p.det*20);
  const from=p.glide>0&&lastLead?lastLead:p.sweep?f*Math.pow(2,p.sweep/12):0,rt=p.glide>0&&lastLead?p.glide:.06;
- srcs.forEach(({fp,k})=>{fp.setValueAtTime((from||f)*k,t);if(from)fp.exponentialRampToValueAtTime(f*k,t+rt)});
- if(p.arp){const a=LARP[p.arp],sub=stepDur()/4,st=t+(from?rt:0);for(let i=0;i<Math.min(400,8/sub);i++){const x=st+i*sub;srcs.forEach(({fp,k})=>fp.setValueAtTime(f*Math.pow(2,a[i%a.length]/12)*k,x))}}
+ srcs.filter(x=>x.fp).forEach(({fp,k})=>{fp.setValueAtTime((from||f)*k,t);if(from)fp.exponentialRampToValueAtTime(f*k,t+rt)});
+ if(p.arp){const a=LARP[p.arp],sub=stepDur()/4,st=t+(from?rt:0);for(let i=0;i<Math.min(400,8/sub);i++){const x=st+i*sub;srcs.filter(x=>x.fp).forEach(({fp,k})=>fp.setValueAtTime(f*Math.pow(2,a[i%a.length]/12)*k,x))}}
  lastLead=f;
- if(C.tg){if(C.tg==='PITCH')C.nodes.det=srcs.filter(x=>x.dp).map(x=>[x.dp,x.b]);lfoAutomate(p,t,dur||8,pos,C.nodes,999)}
+ if(C.tg&&!tl){if(C.tg==='PITCH')C.nodes.det=srcs.filter(x=>x.dp).map(x=>[x.dp,x.b]);lfoAutomate(p,t,dur||8,pos,C.nodes,999)}
  const pk=.5;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+p.att+.002);g.gain.setTargetAtTime(pk*p.sus,t+p.att+.002,p.dec/3);
  let done=false;
- return{release(t2){if(done)return;done=true;g.gain.cancelScheduledValues(t2);g.gain.setTargetAtTime(0,t2,.02);srcs.forEach(({n})=>{try{n.stop(t2+.2)}catch(e){}})}};
+ return{release(t2){if(done)return;done=true;g.gain.cancelScheduledValues(t2);g.gain.setTargetAtTime(0,t2,.02);[...new Set(srcs.map(x=>x.v))].forEach(v=>v.stop(t2+.2))}};
 }
 
 /* ---------- MEME mit Slicer ---------- */
@@ -606,7 +681,8 @@ function meme(t,idx,dest,stepIdx){
  const p=SP.meme,i=idx-1;dest=dest||bus.meme;
  const rev=!!(p.mode&1),base=rev?MBR[i]:MB[i];
  if(!base){FX[SND[i].n](t,dest);return}
- const rate=Math.pow(2,(p.pitch+(p.rnd?Math.round((Math.random()*2-1)*p.rnd):0))/12);
+ const lv=p.lfd!==0?lfoValP(p,transportPos(t),333):0,ltg=MLT[p.lft];
+ const rate=Math.pow(2,(p.pitch+liveShift+(ltg==='PITCH'?lv*12:0)+(p.rnd?Math.round((Math.random()*2-1)*p.rnd):0))/12);
  let off=0,srcLen=base.duration,buf=base;
  if(p.slc>0){
   const N=[0,2,4,8,16][p.slc],c=sliceCtr[idx]=(sliceCtr[idx]||0)+1;
@@ -614,21 +690,21 @@ function meme(t,idx,dest,stepIdx){
   const sl=base.duration/N;let r=rev;if(p.srev>0&&Math.random()<p.srev)r=!r;
   buf=r?MBR[i]:MB[i];off=(r!==rev?N-1-k:k)*sl;srcLen=sl*p.sgate;
  }
- const full=Math.max(.01,srcLen/rate*p.len);
+ const full=Math.max(.01,srcLen/rate*(ltg==='LÄNGE'&&lv?clamp(p.len+lv*.5,.05,1):p.len));
  const play=(x,dur)=>{const s=ctx.createBufferSource();s.buffer=buf;s.playbackRate.value=rate;const g=vca(dest);
   g.gain.setValueAtTime(1,x);g.gain.setValueAtTime(1,x+Math.max(.003,dur-.015));g.gain.linearRampToValueAtTime(0,x+dur);s.connect(g);s.start(x,off);s.stop(x+dur+.02)};
  if(p.mode>=2){const sl=Math.min(stepDur()/2,full);for(let k=0;k<4;k++)play(t+k*sl,sl*.9)}else play(t,full);
 }
 
 /* ---------- SEQUENCER ---------- */
-let nextBase=0,nextTime=0,step=0,queue=[],timer,stepCount=0,lastStepT=0,leadCur=0,rec=false,kbOct=4;
+let firstBar=false,nextBase=0,nextTime=0,step=0,queue=[],timer,stepCount=0,lastStepT=0,leadCur=0,rec=false,kbOct=4;
 function stepDur(){return 60/K().bpm/4}
 function pickPattern(){
  if(chainOn){for(let k=1;k<=8;k++){const i=(chainPos+k)%8;if(CHAIN[i]){chainPos=i;return CHAIN[i]-1}}}
- return pat}
+ return active}
 const safe=f=>{try{f()}catch(e){console.warn(e)}};
 function schedule(s,t){
- const d=stepDur(),X=PAT[playPat],on=t2=>X[t2]&&X[t2][s]&&audible(t2);
+ const d=stepDur(),X=LIVE[playPat],on=t2=>X[t2]&&X[t2][s]&&audible(t2);
  if(on('kick'))safe(()=>kick(t,X.kick[s]===2));
  if(on('hat'))safe(()=>hat(t,X.hat[s],s));
  if(on('bass'))safe(()=>bass(t,X.bass[s],d,stepCount));
@@ -639,13 +715,13 @@ function schedule(s,t){
 }
 function tick(){
  while(nextTime<ctx.currentTime+.12){
-  if(step===0)playPat=pickPattern();
+  if(step===0){if(firstBar&&!chainOn)firstBar=false;else{firstBar=false;playPat=pickPattern()}}
   schedule(step,nextTime);stepCount++;
   nextBase+=stepDur();step=(step+1)%16;
   nextTime=nextBase+(step%2?K().sw*stepDur()*.66:0);
  }
 }
-function start(){initAudio();nextBase=nextTime=ctx.currentTime+.06;step=0;stepCount=0;lastLead=0;lastBF=0;chainPos=-1;queue=[];timer=setInterval(tick,25);playing=true;$('play').classList.add('on');$('play').textContent='■ STOP'}
+function start(){initAudio();playPat=active;firstBar=true;nextBase=nextTime=ctx.currentTime+.06;step=0;stepCount=0;lastLead=0;lastBF=0;chainPos=-1;queue=[];timer=setInterval(tick,25);playing=true;$('play').classList.add('on');$('play').textContent='■ STOP'}
 function stop(){clearInterval(timer);playing=false;curStep=-1;uiChain=-1;queue=[];$('play').classList.remove('on');$('play').textContent='▶ PLAY';drawAll()}
 function frame(){
  if(ctx&&playing){let ch=false,pc=false;
@@ -659,11 +735,11 @@ function frame(){
 requestAnimationFrame(frame);
 
 /* ---------- UI ---------- */
-const viewPat=()=>chainOn&&playing?uiPat:pat;
+const viewPat=()=>pat;
 function drawScreen(){
  const k=K(),ms=TR.map(t=>SO[t]?'S':M[t]?'m':'·').join('');
  $('scr').textContent=
-`MEMETEK v0.8 ${playing?'▶':'■'} P${viewPat()+1}${chainOn?'⛓':' '} ${String(curStep+1).padStart(2,'0')}/16${rec?' ●REC':''}
+`MEMETEK FM1 ${playing?'▶P'+(uiPat+1):'■P'+(active+1)}${chainOn?'⛓':' '} E:P${pat+1}${pending[pat]?'*':' '} ${String(curStep+1).padStart(2,'0')}/16${rec?' ●REC':''}
 TRK ${TN[track].padEnd(9)}S${page[track]+1} ${k.bpm}BPM
 FX  ${BL[SND[memeSel-1].b]}:${SND[memeSel-1].n.padEnd(9)}${crushState.bits}BIT
 KHBALM ${ms} >> ${word}`}
@@ -673,15 +749,15 @@ function drawSteps(){
  [...el.children].forEach((b,i)=>{const v=arr[i],lv=b.firstChild;b.classList.toggle('cur',i===curStep);b.classList.toggle('cursor',track==='lead'&&i===leadCur);
   if(!v){lv.style.background='transparent';lv.textContent=''}
   else{lv.style.background=c;lv.style.opacity=dim*(track==='meme'||track==='lead'?1:(.45+v*.2));
-   lv.textContent=track==='meme'?SND[v-1].a:track==='lead'?NN(v):track==='kick'?(v===2?'!':''):track==='hat'?(v===2?'O':v===3?'R':'x'):['','1','5','8'][v]}})
+   lv.textContent=track==='meme'?SND[v-1].a:track==='lead'?NN(v):track==='kick'?(v===2?'!':''):track==='hat'?(v===2?'O':v===3?'R':'x'):track==='chip'?['','I','IV','V'][v]:['','1','5','8'][v]}})
 }
 function tap(i){
  const a=PAT[viewPat()][track];
- if(track==='lead'){if(i===leadCur&&a[i])a[i]=0;leadCur=i;save();drawSteps();
+ if(track==='lead'){if(i===leadCur&&a[i])a[i]=0;leadCur=i;edited(pat);save();drawPats();drawSteps();
   if(!playing&&a[i]){initAudio();const t=ctx.currentTime+.01;leadVoice(t,a[i],bus.leadLive).release(t+SP.lead.len*stepDur())}return}
  if(track==='meme')a[i]=a[i]===memeSel?0:memeSel;
  else a[i]=(a[i]+1)%(track==='kick'?3:4);
- save();drawSteps();
+ edited(pat);save();drawPats();drawSteps();
  if(!playing&&a[i]){initAudio();const t=ctx.currentTime+.01,d=stepDur(),v=a[i];
   ({kick:()=>kick(t,v===2),hat:()=>hat(t,v),bass:()=>bass(t,v,d),chip:()=>chip(t,v,d),meme:()=>meme(t,v,bus.pad)})[track]()}
 }
@@ -704,7 +780,7 @@ function noteOn(n,el){
  if(rec){const X=PAT[viewPat()].lead;
   if(playing){const pos=(ctx.currentTime-lastStepT)>stepDur()/2?(curStep+1)%16:Math.max(0,curStep);X[pos]=note}
   else{X[leadCur]=note;leadCur=(leadCur+1)%16}
-  save();if(track!=='lead')setTrack('lead');else drawSteps()}
+  edited(pat);save();drawPats();if(track!=='lead')setTrack('lead');else drawSteps()}
  drawScreen();
 }
 function noteOff(n,el){if(held[n]){held[n].release(ctx.currentTime);delete held[n]}el.classList.remove('on')}
@@ -790,10 +866,16 @@ function drawTracks(){
  document.querySelectorAll('.mute').forEach(b=>b.classList.toggle('on',M[b.dataset.t]));
  document.querySelectorAll('.solo').forEach(b=>b.classList.toggle('on',SO[b.dataset.t]));
 }
+/* a pattern button: the first click shows and edits that pattern, the next click activates it */
+function patternKey(i){
+ if(i!==pat){pat=i;word='P'+(i+1)+': 2x = AKTIV'}
+ else{LIVE[i]=cp(PAT[i]);pending[i]=false;if(!chainOn)active=i;word='P'+(i+1)+(playing&&!chainOn&&uiPat!==i?' AB TAKTENDE':' AKTIV')}
+ save();drawAll()}
 function drawPats(){
- $('pats').innerHTML=[0,1,2,3].map(i=>`<button class="pat${i===viewPat()?' on':''}${playing&&i===uiPat?' play':''}" data-p="${i}">P${i+1}</button>`).join('')+'<button id="dup">DUP →</button>';
- document.querySelectorAll('.pat').forEach(b=>b.onclick=()=>{pat=+b.dataset.p;drawAll()});
- $('dup').onclick=()=>{const v=viewPat(),n=(v+1)%4;PAT[n]=JSON.parse(JSON.stringify(PAT[v]));pat=n;save();drawAll()};
+ const isActive=i=>chainOn?(playing&&i===uiPat):i===active;
+ $('pats').innerHTML=[0,1,2,3].map(i=>`<button class="pat${i===pat?' on':''}${isActive(i)?' play':''}" data-p="${i}">P${i+1}${pending[i]?'*':''}</button>`).join('')+'<button id="dup">DUP →</button>';
+ document.querySelectorAll('.pat').forEach(b=>b.onclick=()=>patternKey(+b.dataset.p));
+ $('dup').onclick=()=>{const v=pat,n=(v+1)%4;PAT[n]=cp(PAT[v]);pat=n;edited(n);word='KOPIE -> P'+(n+1);save();drawAll()};
 }
 function drawSlots(){
  $('slots').innerHTML=CHAIN.map((v,i)=>`<button class="slot${v?'':' empty'}${chainOn&&playing&&i===uiChain?' play':''}" data-i="${i}">${v||'–'}</button>`).join('');
@@ -804,7 +886,7 @@ function drawAll(){drawPats();drawSlots();drawTracks();drawSteps();drawScreen()}
 function setTrack(t){track=t;drawTracks();drawSteps();drawEdit();drawScreen()}
 function toggleMute(t){M[t]=!M[t];updateGains();save();drawTracks();drawSteps();drawScreen()}
 function toggleSolo(t){SO[t]=!SO[t];updateGains();save();drawTracks();drawSteps();drawScreen()}
-function save(){try{localStorage.setItem('memetek7',JSON.stringify({PAT,M,SO,CHAIN,chainOn,SP,MX}))}catch(e){}}
+function save(){try{localStorage.setItem('memetek8',JSON.stringify({PAT,M,SO,CHAIN,chainOn,SP,MX}))}catch(e){}}
 function rnd(){
  const r=Math.random,X=PAT[viewPat()],a=X[track];
  for(let i=0;i<16;i++){
@@ -815,7 +897,7 @@ function rnd(){
   if(track==='meme'){const bs=bankSounds(bank);a[i]=r()<.2?bs[r()*bs.length|0]:0}
   if(track==='lead'){const pent=[0,3,5,7,10];a[i]=r()<.5?57+SP.bass.root+pent[r()*5|0]+12*(r()<.3?1:0):0}
  }
- save();drawSteps();
+ edited(pat);save();drawPats();drawSteps();
 }
 function drawBanks(){
  $('banks').innerHTML=BANKS.map((b,i)=>`<button class="bank${i===bank?' on':''}" data-b="${i}">${BL[i]} ${b.n}</button>`).join('');
@@ -827,18 +909,25 @@ function drawBanks(){
 document.querySelectorAll('.trk').forEach(b=>b.onclick=()=>setTrack(b.dataset.t));
 document.querySelectorAll('.mute').forEach(b=>b.onclick=()=>toggleMute(b.dataset.t));
 document.querySelectorAll('.solo').forEach(b=>b.onclick=()=>toggleSolo(b.dataset.t));
-document.querySelectorAll('.pre').forEach(b=>b.onclick=()=>{const p=PRE[b.dataset.p];PAT[viewPat()]=fromPre(b.dataset.p);$('k_bpm').value=p.bpm;applyKnobs();save();drawSteps()});
+document.querySelectorAll('.pre').forEach(b=>b.onclick=()=>{const p=PRE[b.dataset.p];PAT[viewPat()]=fromPre(b.dataset.p);edited(pat);$('k_bpm').value=p.bpm;applyKnobs();save();drawPats();drawSteps()});
 document.querySelectorAll('input[type=range]').forEach(i=>i.oninput=applyKnobs);
 $('play').onclick=()=>playing?stop():start();
 $('rnd').onclick=rnd;
-$('clr').onclick=()=>{PAT[viewPat()][track].fill(0);save();drawSteps()};
+$('clr').onclick=()=>{PAT[viewPat()][track].fill(0);edited(pat);save();drawPats();drawSteps()};
+$('tapBtn').onclick=()=>{const n=performance.now(),d=n-(window._tapLast||0);window._tapLast=n;
+ if(d<250||d>1500){window._taps=[];word='TAP';drawScreen();return}
+ const a=window._taps=(window._taps||[]).concat(d).slice(-4),bpm=Math.round(clamp(60000/(a.reduce((x,y)=>x+y,0)/a.length),60,200));
+ $('k_bpm').value=bpm;applyKnobs();word='TAP '+bpm+' BPM';drawScreen()};
+const shiftTrack=dir=>{const a=PAT[pat][track];if(dir>0)a.unshift(a.pop());else a.push(a.shift());edited(pat);save();drawPats();drawSteps()};
+$('shL').onclick=()=>shiftTrack(-1);$('shR').onclick=()=>shiftTrack(1);
+document.querySelectorAll('.lsh').forEach(b=>b.onclick=()=>{liveShift=+b.dataset.s;document.querySelectorAll('.lsh').forEach(x=>x.classList.toggle('on',x===b));word='PITCH '+(liveShift>0?'+':'')+liveShift;drawScreen()});
 $('chainOn').onclick=()=>{chainOn=!chainOn;chainPos=-1;save();drawAll()};
 $('pgBtn').onclick=()=>{page[track]=(page[track]+1)%PS[track].length;drawEdit();drawScreen()};
 $('rstBtn').onclick=()=>{SP[track]=defaultSP()[track];applyShapers();updateGains();updateEcho();save();drawEdit();drawScreen()};
 $('kbDown').onclick=()=>{kbOct=Math.max(1,kbOct-1);buildKeyboard()};
 $('kbUp').onclick=()=>{kbOct=Math.min(6,kbOct+1);buildKeyboard()};
 $('recBtn').onclick=()=>setRec(!rec);
-$('restBtn').onclick=()=>{if(track!=='lead')setTrack('lead');PAT[viewPat()].lead[leadCur]=0;leadCur=(leadCur+1)%16;save();drawSteps()};
+$('restBtn').onclick=()=>{if(track!=='lead')setTrack('lead');PAT[viewPat()].lead[leadCur]=0;leadCur=(leadCur+1)%16;edited(pat);save();drawPats();drawSteps()};
 $('tabEdit').onclick=()=>setView('edit');$('tabMix').onclick=()=>setView('mix');
 buildKeyboard();drawBanks();track='bass';applyKnobs();drawAll();drawEdit();
 
