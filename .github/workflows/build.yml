@@ -30,3 +30,32 @@ jobs:
     with:
       build: ./build.sh ${{ github.ref_type == 'tag' && format('--release {0}', github.ref_name) || '' }}
       packages: build/memetek*
+  release:
+    # a push to main publishes its packages as the release vX.Y of the VERSION file (updated in place until VERSION changes)
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: dist
+      - id: v
+        run: echo "v=$(tr -d ' \n' < VERSION)" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8   # v2.3.2
+        with:
+          tag_name: v${{ steps.v.outputs.v }}
+          target_commitish: ${{ github.sha }}
+          name: MEMETEK v${{ steps.v.outputs.v }}
+          prerelease: true
+          overwrite_files: true
+          files: dist/*
+          body: |
+            MEMETEK v${{ steps.v.outputs.v }} (build ${{ github.sha }}). Noch nicht auf echter Hardware getestet: Installieren auf eigene Gefahr.
+
+            **memetek.dock**: das Modul für fm1-dock. fm1-dock einmal installieren (https://joakimeriksson.github.io/fm1-dock/#install), dann die Datei auf die Konsole ziehen (https://joakimeriksson.github.io/fm1-dock/#console). Am FM-1 HOME halten und MEMETEK wählen.
+            **memetek.fwsc**: dieselbe Firmware eigenständig (fm1-dock mit MEMETEK allein, Identität FM-1_964).
+            Zurück: FM-1 Firmware Hub (https://fm1.designburgapps.com) oder M-VAVEs Updater.
